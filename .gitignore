@@ -1,0 +1,44 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode
+DerivedData/
+build/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/configuration/registries.json
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.netrc
+
+# CocoaPods (ako ikad dodaš)
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Lokalni Cursor / spec prompt (ne na remote)
+SingiCampus_CursorPrompt.docx
+SingiCampus_CursorPrompt.txt
+
+# Firebase — za JAVNI repo često se ignoriše i doda README sa uputstvom.
+# Za privatni timski repo mnogi ga commituju da clone radi odmah.
+# Odkomentuj sledeću liniju ako NE želiš plist na GitHubu:
+# **/GoogleService-Info.plist
