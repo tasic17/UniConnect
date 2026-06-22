@@ -3,10 +3,12 @@ import SwiftUI
 struct ProfileView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var boardVM: BoardViewModel
+    @EnvironmentObject var followVM: FollowViewModel
     @State private var showEditProfile = false
+    @State private var navigationPath = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             Group {
                 if let user = authViewModel.currentUser {
                     profileScroll(user: user)
@@ -65,6 +67,17 @@ struct ProfileView: View {
                 UserProfileView(userId: target.userId)
                     .environmentObject(authViewModel)
             }
+            .navigationDestination(for: PostDetailNavigationID.self) { nav in
+                PostDetailView(postId: nav.postId, navigationPath: $navigationPath)
+                    .environmentObject(boardVM)
+                    .environmentObject(authViewModel)
+            }
+            .navigationDestination(for: ProfileConnectionsNavigationID.self) { nav in
+                ProfileConnectionsListView(userId: nav.userId, kind: nav.kind)
+                    .environmentObject(authViewModel)
+                    .environmentObject(boardVM)
+                    .environmentObject(followVM)
+            }
         }
     }
 
@@ -72,6 +85,12 @@ struct ProfileView: View {
         ScrollView {
             VStack(spacing: 24) {
                 avatarBlock(for: user)
+
+                ProfileStatsRow(
+                    userId: user.uid,
+                    followersCount: followVM.followersCount,
+                    followingCount: followVM.followingCount
+                )
 
                 VStack(alignment: .leading, spacing: 12) {
                     profileRow(title: "Ime", value: user.displayName, icon: "person.fill")
@@ -117,38 +136,25 @@ struct ProfileView: View {
         }
         .refreshable {
             await authViewModel.fetchCurrentUser()
+            if let uid = authViewModel.currentUser?.uid {
+                await followVM.reloadFollowing(userId: uid)
+            }
             NotificationCenter.default.post(name: .boardPostsDidChange, object: nil)
             NotificationCenter.default.post(name: .feedPostsDidChange, object: nil)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .profileConnectionsDidChange)) { _ in
+            guard let uid = authViewModel.currentUser?.uid else { return }
+            Task { await followVM.reloadFollowing(userId: uid) }
         }
     }
 
     private func avatarBlock(for user: AppUser) -> some View {
         VStack(spacing: 12) {
-            Group {
-                if let urlStr = user.profileImageURL?.trimmingCharacters(in: .whitespacesAndNewlines),
-                   !urlStr.isEmpty,
-                   let url = URL(string: urlStr) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        case .failure:
-                            avatarFallback(name: user.displayName)
-                        case .empty:
-                            ProgressView()
-                        @unknown default:
-                            avatarFallback(name: user.displayName)
-                        }
-                    }
-                    .id(urlStr)
-                    .frame(width: 96, height: 96)
-                    .clipShape(Circle())
-                } else {
-                    avatarFallback(name: user.displayName)
-                }
-            }
+            ProfileAvatarImage(
+                imageURL: user.profileImageURL,
+                name: user.displayName,
+                size: 96
+            )
             Text(user.displayName)
                 .font(.title2.bold())
         }

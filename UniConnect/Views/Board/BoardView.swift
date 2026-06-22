@@ -4,9 +4,10 @@ struct BoardView: View {
     @EnvironmentObject var viewModel: BoardViewModel
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var showCreatePost = false
+    @State private var navigationPath = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             VStack(spacing: 0) {
                 TextField("Pretraga…", text: $viewModel.searchText)
                     .textFieldStyle(.roundedBorder)
@@ -51,13 +52,11 @@ struct BoardView: View {
                     List {
                         ForEach(viewModel.filteredPosts) { post in
                             if let id = post.id {
-                                NavigationLink {
-                                    PostDetailView(postId: id)
-                                        .environmentObject(viewModel)
-                                        .environmentObject(authViewModel)
-                                } label: {
-                                    PostRowContent(post: post)
-                                }
+                                PostRowMainContent(post: post)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        navigationPath.append(PostDetailNavigationID(postId: id))
+                                    }
                             }
                         }
                     }
@@ -88,6 +87,11 @@ struct BoardView: View {
             .refreshable {
                 await viewModel.fetchPosts()
             }
+            .navigationDestination(for: PostDetailNavigationID.self) { nav in
+                PostDetailView(postId: nav.postId, navigationPath: $navigationPath)
+                    .environmentObject(viewModel)
+                    .environmentObject(authViewModel)
+            }
             .navigationDestination(for: AuthorProfileNavigationID.self) { target in
                 UserProfileView(userId: target.userId)
                     .environmentObject(authViewModel)
@@ -96,7 +100,7 @@ struct BoardView: View {
     }
 }
 
-private struct PostRowContent: View {
+private struct PostRowMainContent: View {
     let post: Post
 
     var body: some View {
@@ -117,41 +121,28 @@ private struct PostRowContent: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             VStack(alignment: .leading, spacing: 6) {
-            Text(post.title)
-                .font(.headline)
-                .foregroundStyle(.primary)
-            Text(post.description)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-            HStack {
-                Text(post.category.rawValue)
-                    .font(.caption2)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(Constants.Colors.primary.opacity(0.12))
-                    .foregroundStyle(Constants.Colors.primary)
-                    .clipShape(Capsule())
-                if let price = post.price {
-                    Text(price, format: .currency(code: "RSD"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-            }
-            NavigationLink(value: AuthorProfileNavigationID(userId: post.authorId)) {
-                HStack(spacing: 6) {
-                    AuthorInitialsCircle(name: post.authorName, size: 22)
-                    Text(post.authorName)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                    Image(systemName: "chevron.right")
+                Text(post.title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Text(post.description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                HStack {
+                    Text(post.category.rawValue)
                         .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(Constants.Colors.primary.opacity(0.12))
+                        .foregroundStyle(Constants.Colors.primary)
+                        .clipShape(Capsule())
+                    if let price = post.price {
+                        Text(price, format: .currency(code: "RSD"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
                 }
-            }
-            .buttonStyle(.plain)
-            .fixedSize(horizontal: true, vertical: true)
             }
         }
         .padding(.vertical, 4)

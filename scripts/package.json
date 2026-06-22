@@ -1,0 +1,11 @@
+{
+  "name": "uniconnect-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "migrate:followers": "node migrate-followers-mirror.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.2"
+  }
+}

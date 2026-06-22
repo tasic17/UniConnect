@@ -24,11 +24,12 @@ Minimalna verzija iOS-a: **iOS 17+**.
 - **Oglasi (board)** — lista, pretraga, filter kategorije, kreiranje sa slikama, detalj, izmena slika (zadrži/dodaj/obriši), brisanje; profil autora.
 - **Feed** — korenske objave, threadovi (odgovori), lajkovi, slike, filter „Moj smer”, brisanje thread-a; odgovor sa preview slika; navigacija na profil (avatar + ime).
 - **Profil** — pregled i izmena (ime, godina, smer, bio, profilna slika); tuđi profil (`UserProfileView`); sekcije oglasa i feed objava autora (uredi/obriši sopstvene).
+- **Poruke** — lista razgovora (Firestore real-time), ekran chata, slanje poruka; kontakt prodavca sa oglasa („Pošalji poruku”).
 - **Performanse** — paralelno učitavanje tabova, Firestore disk keš, `URLCache`, prefetch avatara u feedu.
 
-### U planu
+### U planu / polish
 
-- **Poruke** — tab je placeholder u `MainTabView`; modeli `Chat` / `Message` i Firestore pravila za `chats` su pripremljeni.
+- Označavanje poruka kao pročitanih, push notifikacije.
 
 ## Struktura repozitorijuma
 
@@ -75,7 +76,7 @@ UniConnect/
 | Događaji | `events/{eventId}` |
 | Oglasi | `posts/{postId}` |
 | Feed | `feed_posts/{postId}` (koren + odgovori u istoj kolekciji) |
-| Poruke (plan) | `chats/{chatId}` + `messages/{messageId}` |
+| Poruke | `chats/{chatId}` + podkolekcija `messages/{messageId}` |
 | Profilne slike | `profile_images/{uid}.jpg` |
 | Slike oglasa | `posts/{postId}/…` |
 | Slike feeda | `feed_posts/{postId}/…` |

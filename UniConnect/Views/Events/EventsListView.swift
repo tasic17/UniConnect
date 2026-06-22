@@ -22,9 +22,7 @@ struct EventsListView: View {
                 List {
                     ForEach(events) { event in
                         if let id = event.id {
-                            NavigationLink {
-                                EventDetailView(eventId: id)
-                            } label: {
+                            NavigationLink(value: id) {
                                 EventRowContent(event: event)
                             }
                         }

@@ -16,6 +16,26 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       allow update: if isOwner(userId);
       allow delete: if false;
+
+      match /following/{targetId} {
+        allow get, list: if signedIn();
+        allow create: if isOwner(userId)
+          && request.resource.data.targetUserId == targetId
+          && targetId != userId;
+        allow delete: if isOwner(userId);
+        allow update: if false;
+      }
+
+      match /followers/{followerId} {
+        allow get, list: if signedIn();
+        allow create: if signedIn()
+          && request.resource.data.followerUserId == followerId
+          && followerId == request.auth.uid
+          && followerId != userId;
+        allow delete: if signedIn()
+          && (followerId == request.auth.uid || isOwner(userId));
+        allow update: if false;
+      }
     }
 
     // ——— Događaji ———
@@ -61,13 +81,18 @@ service cloud.firestore {
       );
     }
 
-    // ——— Poruke (kad implementiraš modul) ———
+    // ——— Poruke ———
     match /chats/{chatId} {
-      allow read, update: if signedIn()
+      allow read: if signedIn()
         && request.auth.uid in resource.data.participants;
       allow create: if signedIn()
-        && request.auth.uid in request.resource.data.participants;
-      allow delete: if false;
+        && request.auth.uid in request.resource.data.participants
+        && request.resource.data.participants.size() == 2
+        && request.resource.data.participantKey is string;
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.participants;
+      allow delete: if signedIn()
+        && request.auth.uid in resource.data.participants;
 
       match /messages/{messageId} {
         allow read: if signedIn()
@@ -75,7 +100,9 @@ service cloud.firestore {
         allow create: if signedIn()
           && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
           && request.resource.data.senderId == request.auth.uid;
-        allow update, delete: if false;
+        allow delete: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        allow update: if false;
       }
     }
   }

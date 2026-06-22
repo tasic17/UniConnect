@@ -3,6 +3,7 @@ import SwiftUI
 
 struct EventDetailView: View {
     let eventId: String
+    var navigationPath: Binding<NavigationPath>?
     @EnvironmentObject var eventsVM: EventsViewModel
     @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
@@ -44,19 +45,11 @@ struct EventDetailView: View {
                         }
 
                         labeledSection(label: "Organizator") {
-                            NavigationLink(value: AuthorProfileNavigationID(userId: event.authorId)) {
-                                HStack(spacing: 8) {
-                                    AuthorInitialsCircle(name: event.authorName, size: 28)
-                                    Text(event.authorName)
-                                        .font(.body)
-                                        .foregroundStyle(.primary)
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption2)
-                                        .foregroundStyle(.tertiary)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .fixedSize(horizontal: true, vertical: true)
+                            AuthorProfileTapRow(
+                                userId: event.authorId,
+                                fallbackName: event.authorName,
+                                navigationPath: navigationPath
+                            )
                         }
 
                         labeledSection(label: "Kategorija") {

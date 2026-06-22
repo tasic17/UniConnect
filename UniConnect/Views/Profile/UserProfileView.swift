@@ -1,3 +1,4 @@
+import FirebaseFirestore
 import SwiftUI
 
 /// Pregled tuđeg (ili sopstvenog) profila iz feeda / oglasa / događaja.
@@ -5,10 +6,17 @@ struct UserProfileView: View {
     let userId: String
     @EnvironmentObject private var authViewModel: AuthViewModel
     @EnvironmentObject private var boardVM: BoardViewModel
+    @EnvironmentObject private var chatVM: ChatViewModel
+    @EnvironmentObject private var followVM: FollowViewModel
 
     @State private var user: AppUser?
     @State private var isLoading = true
     @State private var loadError: String?
+    @State private var isOpeningChat = false
+    @State private var isFollowBusy = false
+    @State private var followersCount = 0
+    @State private var followingCount = 0
+    @State private var countListeners: [ListenerRegistration] = []
 
     private var isMe: Bool {
         authViewModel.currentUser?.uid == userId
@@ -38,8 +46,25 @@ struct UserProfileView: View {
         .background(Constants.Colors.background)
         .navigationTitle(user?.displayName ?? "Profil")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: ProfileConnectionsNavigationID.self) { nav in
+            ProfileConnectionsListView(userId: nav.userId, kind: nav.kind)
+        }
+        .navigationDestination(for: AuthorProfileNavigationID.self) { target in
+            UserProfileView(userId: target.userId)
+        }
         .task(id: userId) {
             await load()
+            if let uid = authViewModel.currentUser?.uid {
+                await followVM.ensureFollowingLoaded(userId: uid)
+            }
+        }
+        .onAppear { startCountListenersIfNeeded() }
+        .onDisappear { stopCountListeners() }
+        .onChange(of: followVM.followersCount) { _, value in
+            if isMe { followersCount = value }
+        }
+        .onChange(of: followVM.followingCount) { _, value in
+            if isMe { followingCount = value }
         }
     }
 
@@ -48,6 +73,12 @@ struct UserProfileView: View {
         ScrollView {
             VStack(spacing: 16) {
                 avatarSection(for: user)
+
+                ProfileStatsRow(
+                    userId: user.uid,
+                    followersCount: isMe ? followVM.followersCount : followersCount,
+                    followingCount: isMe ? followVM.followingCount : followingCount
+                )
 
                 VStack(alignment: .leading, spacing: 12) {
                     profileRow(title: "Ime", value: user.displayName, icon: "person.fill")
@@ -73,6 +104,38 @@ struct UserProfileView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Button {
+                        Task { await toggleFollow(target: user) }
+                    } label: {
+                        if isFollowBusy {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                        } else if followVM.isFollowing(user.uid) {
+                            Label("Prestani da pratiš", systemImage: "person.badge.minus")
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Label("Zaprati", systemImage: "person.badge.plus")
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(isFollowBusy || authViewModel.currentUser == nil)
+
+                    Button {
+                        Task { await openDirectMessage() }
+                    } label: {
+                        if isOpeningChat {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Label("Pošalji poruku", systemImage: "message.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Constants.Colors.primary)
+                    .disabled(isOpeningChat || authViewModel.currentUser == nil)
                 }
 
                 ProfileUserPostsSection(userId: user.uid, isMe: isMe)
@@ -83,6 +146,13 @@ struct UserProfileView: View {
         }
         .refreshable {
             await load()
+            if isMe {
+                if let uid = authViewModel.currentUser?.uid {
+                    await followVM.reloadFollowing(userId: uid)
+                }
+            } else {
+                await loadConnectionCountsOnce()
+            }
             NotificationCenter.default.post(name: .boardPostsDidChange, object: nil)
             NotificationCenter.default.post(name: .feedPostsDidChange, object: nil)
         }
@@ -90,28 +160,11 @@ struct UserProfileView: View {
 
     private func avatarSection(for user: AppUser) -> some View {
         VStack(spacing: 12) {
-            let urlStr = user.profileImageURL?.trimmingCharacters(in: .whitespacesAndNewlines)
-            if let urlStr, !urlStr.isEmpty, let url = URL(string: urlStr) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure:
-                        avatarPlaceholder(name: user.displayName)
-                    case .empty:
-                        ProgressView()
-                    @unknown default:
-                        avatarPlaceholder(name: user.displayName)
-                    }
-                }
-                .id(urlStr)
-                .frame(width: 96, height: 96)
-                .clipShape(Circle())
-            } else {
-                avatarPlaceholder(name: user.displayName)
-            }
+            ProfileAvatarImage(
+                imageURL: user.profileImageURL,
+                name: user.displayName,
+                size: 96
+            )
             Text(user.displayName)
                 .font(.title2.bold())
         }
@@ -182,6 +235,62 @@ struct UserProfileView: View {
         } catch {
             loadError = error.localizedDescription
             user = nil
+        }
+    }
+
+    private func openDirectMessage() async {
+        guard let uid = authViewModel.currentUser?.uid else { return }
+        isOpeningChat = true
+        defer { isOpeningChat = false }
+        if let chatId = await chatVM.openChat(
+            currentUserId: uid,
+            otherUserId: userId,
+            postId: nil,
+            postTitle: nil
+        ) {
+            chatVM.requestOpenChat(chatId: chatId)
+        }
+    }
+
+    private func toggleFollow(target: AppUser) async {
+        guard let me = authViewModel.currentUser else { return }
+        isFollowBusy = true
+        defer { isFollowBusy = false }
+        if followVM.isFollowing(target.uid) {
+            _ = await followVM.unfollow(currentUserId: me.uid, targetUserId: target.uid)
+        } else {
+            _ = await followVM.follow(currentUser: me, target: target)
+        }
+    }
+
+    private func startCountListenersIfNeeded() {
+        stopCountListeners()
+        if isMe {
+            followersCount = followVM.followersCount
+            followingCount = followVM.followingCount
+            return
+        }
+        countListeners = FirestoreService.shared.listenConnectionCounts(userId: userId) { followers, following in
+            Task { @MainActor in
+                followersCount = followers
+                followingCount = following
+            }
+        }
+    }
+
+    private func stopCountListeners() {
+        countListeners.forEach { $0.remove() }
+        countListeners = []
+    }
+
+    private func loadConnectionCountsOnce() async {
+        do {
+            let counts = try await FirestoreService.shared.fetchConnectionCounts(userId: userId)
+            followersCount = counts.followers
+            followingCount = counts.following
+        } catch {
+            followersCount = 0
+            followingCount = 0
         }
     }
 }

@@ -78,7 +78,7 @@ struct EventsView: View {
                 await viewModel.fetchEvents()
             }
             .navigationDestination(for: String.self) { eventId in
-                EventDetailView(eventId: eventId)
+                EventDetailView(eventId: eventId, navigationPath: $navigationPath)
                     .environmentObject(viewModel)
                     .environmentObject(authViewModel)
             }

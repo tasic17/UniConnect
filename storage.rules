@@ -34,5 +34,12 @@ service firebase.storage {
       allow write: if signedIn() && isImage();
       allow delete: if signedIn();
     }
+
+    // Slike u ćaskanjima: chats/{chatId}/{file}.jpg
+    match /chats/{chatId}/{fileName} {
+      allow read: if signedIn();
+      allow write: if signedIn() && isImage();
+      allow delete: if signedIn();
+    }
   }
 }

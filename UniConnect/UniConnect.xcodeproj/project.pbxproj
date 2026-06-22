@@ -27,6 +27,8 @@
 		56CEDB802F91970000B0E0AF /* FirestoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB7F2F91970000B0E0AF /* FirestoreService.swift */; };
 		56CEDB892F91980000B0E0AF /* EventsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB812F91980000B0E0AF /* EventsViewModel.swift */; };
 		56CEDB8A2F91980000B0E0AF /* FilterChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB822F91980000B0E0AF /* FilterChip.swift */; };
+		56CEDBD62FA0D60000B0E0AF /* AuthorProfileCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBD72FA0D60000B0E0AF /* AuthorProfileCache.swift */; };
+		56CEDBD82FA0D60000B0E0AF /* AuthorProfileTapRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBD92FA0D60000B0E0AF /* AuthorProfileTapRow.swift */; };
 		56CEDB8B2F91980000B0E0AF /* EventsMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB832F91980000B0E0AF /* EventsMapView.swift */; };
 		56CEDB8C2F91980000B0E0AF /* EventsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB842F91980000B0E0AF /* EventsListView.swift */; };
 		56CEDB8D2F91980000B0E0AF /* EventDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB852F91980000B0E0AF /* EventDetailView.swift */; };
@@ -50,6 +52,9 @@
 		56CEDBC82FA0C43000B0E0AF /* RemoteThumbnailImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBC92FA0C43000B0E0AF /* RemoteThumbnailImage.swift */; };
 		56CEDBAB2FA0B24000B0E0AF /* EditPostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBA82FA0B24000B0E0AF /* EditPostView.swift */; };
 		56CEDBB32FA0C31000B0E0AF /* FeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBB02FA0C31000B0E0AF /* FeedViewModel.swift */; };
+		56CEDBD12FA0D50000B0E0AF /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBD02FA0D50000B0E0AF /* ChatViewModel.swift */; };
+		56CEDBD32FA0D50000B0E0AF /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBD22FA0D50000B0E0AF /* MessagesView.swift */; };
+		56CEDBD52FA0D50000B0E0AF /* ChatDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBD42FA0D50000B0E0AF /* ChatDetailView.swift */; };
 		56CEDBB42FA0C31000B0E0AF /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBB12FA0C31000B0E0AF /* FeedView.swift */; };
 		56CEDBB52FA0C31000B0E0AF /* CreateFeedPostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBB22FA0C31000B0E0AF /* CreateFeedPostView.swift */; };
 		56CEDBB72FA0C31000B0E0AF /* CreateReplyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBB62FA0C31000B0E0AF /* CreateReplyView.swift */; };
@@ -57,6 +62,13 @@
 		56CEDBC22FA0C41000B0E0AF /* ProfileUserPostsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBC32FA0C41000B0E0AF /* ProfileUserPostsSection.swift */; };
 		56CEDBC42FA0C42000B0E0AF /* EditFeedPostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBC52FA0C42000B0E0AF /* EditFeedPostView.swift */; };
 		56CEDBC62FA0C42000B0E0AF /* ProfileUserFeedPostsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBC72FA0C42000B0E0AF /* ProfileUserFeedPostsSection.swift */; };
+		56CEDBE12FA0E10000B0E0AF /* UserFollow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBE02FA0E10000B0E0AF /* UserFollow.swift */; };
+		56CEDBE32FA0E10000B0E0AF /* FollowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBE22FA0E10000B0E0AF /* FollowViewModel.swift */; };
+		56CEDBE52FA0E10000B0E0AF /* UserSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBE42FA0E10000B0E0AF /* UserSearchView.swift */; };
+		56CEDBE72FA0E20000B0E0AF /* UserFollower.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBE62FA0E20000B0E0AF /* UserFollower.swift */; };
+		56CEDBE92FA0E20000B0E0AF /* ProfileConnectionsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBE82FA0E20000B0E0AF /* ProfileConnectionsListView.swift */; };
+		56CEDBEB2FA0E20000B0E0AF /* ProfileStatsRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBEA2FA0E20000B0E0AF /* ProfileStatsRow.swift */; };
+		56CEDBED2FA0E30000B0E0AF /* FollowMirrorMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBEC2FA0E30000B0E0AF /* FollowMirrorMigration.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,6 +84,8 @@
 		56CEDB7F2F91970000B0E0AF /* FirestoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreService.swift; sourceTree = "<group>"; };
 		56CEDB812F91980000B0E0AF /* EventsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsViewModel.swift; sourceTree = "<group>"; };
 		56CEDB822F91980000B0E0AF /* FilterChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterChip.swift; sourceTree = "<group>"; };
+		56CEDBD72FA0D60000B0E0AF /* AuthorProfileCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorProfileCache.swift; sourceTree = "<group>"; };
+		56CEDBD92FA0D60000B0E0AF /* AuthorProfileTapRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorProfileTapRow.swift; sourceTree = "<group>"; };
 		56CEDB832F91980000B0E0AF /* EventsMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsMapView.swift; sourceTree = "<group>"; };
 		56CEDB842F91980000B0E0AF /* EventsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsListView.swift; sourceTree = "<group>"; };
 		56CEDB852F91980000B0E0AF /* EventDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventDetailView.swift; sourceTree = "<group>"; };
@@ -100,6 +114,9 @@
 		56CEDBC92FA0C43000B0E0AF /* RemoteThumbnailImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteThumbnailImage.swift; sourceTree = "<group>"; };
 		56CEDBA82FA0B24000B0E0AF /* EditPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditPostView.swift; sourceTree = "<group>"; };
 		56CEDBB02FA0C31000B0E0AF /* FeedViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedViewModel.swift; sourceTree = "<group>"; };
+		56CEDBD02FA0D50000B0E0AF /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
+		56CEDBD22FA0D50000B0E0AF /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesView.swift; sourceTree = "<group>"; };
+		56CEDBD42FA0D50000B0E0AF /* ChatDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatDetailView.swift; sourceTree = "<group>"; };
 		56CEDBB12FA0C31000B0E0AF /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
 		56CEDBB22FA0C31000B0E0AF /* CreateFeedPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateFeedPostView.swift; sourceTree = "<group>"; };
 		56CEDBB62FA0C31000B0E0AF /* CreateReplyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateReplyView.swift; sourceTree = "<group>"; };
@@ -107,6 +124,13 @@
 		56CEDBC32FA0C41000B0E0AF /* ProfileUserPostsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileUserPostsSection.swift; sourceTree = "<group>"; };
 		56CEDBC52FA0C42000B0E0AF /* EditFeedPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditFeedPostView.swift; sourceTree = "<group>"; };
 		56CEDBC72FA0C42000B0E0AF /* ProfileUserFeedPostsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileUserFeedPostsSection.swift; sourceTree = "<group>"; };
+		56CEDBE02FA0E10000B0E0AF /* UserFollow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserFollow.swift; sourceTree = "<group>"; };
+		56CEDBE22FA0E10000B0E0AF /* FollowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowViewModel.swift; sourceTree = "<group>"; };
+		56CEDBE42FA0E10000B0E0AF /* UserSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSearchView.swift; sourceTree = "<group>"; };
+		56CEDBE62FA0E20000B0E0AF /* UserFollower.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserFollower.swift; sourceTree = "<group>"; };
+		56CEDBE82FA0E20000B0E0AF /* ProfileConnectionsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileConnectionsListView.swift; sourceTree = "<group>"; };
+		56CEDBEA2FA0E20000B0E0AF /* ProfileStatsRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStatsRow.swift; sourceTree = "<group>"; };
+		56CEDBEC2FA0E30000B0E0AF /* FollowMirrorMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowMirrorMigration.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -156,6 +180,8 @@
 				56CEDB402F9186C600B0E0AF /* FeedPost.swift */,
 				56CEDB412F9186C600B0E0AF /* Message.swift */,
 				56CEDB422F9186C600B0E0AF /* Post.swift */,
+				56CEDBE02FA0E10000B0E0AF /* UserFollow.swift */,
+				56CEDBE62FA0E20000B0E0AF /* UserFollower.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -179,6 +205,8 @@
 				56CEDBA02FA0B22000B0E0AF /* ImageCompression.swift */,
 				56CEDBA72FA0B24000B0E0AF /* PhotoImport.swift */,
 				56CEDBC92FA0C43000B0E0AF /* RemoteThumbnailImage.swift */,
+				56CEDBD72FA0D60000B0E0AF /* AuthorProfileCache.swift */,
+				56CEDBEC2FA0E30000B0E0AF /* FollowMirrorMigration.swift */,
 				56CEDB492F9186C600B0E0AF /* Validators.swift */,
 			);
 			path = Utilities;
@@ -191,6 +219,8 @@
 				56CEDB942FA0B21000B0E0AF /* BoardViewModel.swift */,
 				56CEDB812F91980000B0E0AF /* EventsViewModel.swift */,
 				56CEDBB02FA0C31000B0E0AF /* FeedViewModel.swift */,
+				56CEDBD02FA0D50000B0E0AF /* ChatViewModel.swift */,
+				56CEDBE22FA0E10000B0E0AF /* FollowViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -218,6 +248,8 @@
 		56CEDB512F9186C600B0E0AF /* Chat */ = {
 			isa = PBXGroup;
 			children = (
+				56CEDBD22FA0D50000B0E0AF /* MessagesView.swift */,
+				56CEDBD42FA0D50000B0E0AF /* ChatDetailView.swift */,
 			);
 			path = Chat;
 			sourceTree = "<group>";
@@ -226,6 +258,7 @@
 			isa = PBXGroup;
 			children = (
 				56CEDB822F91980000B0E0AF /* FilterChip.swift */,
+				56CEDBD92FA0D60000B0E0AF /* AuthorProfileTapRow.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -262,6 +295,9 @@
 				56CEDBC72FA0C42000B0E0AF /* ProfileUserFeedPostsSection.swift */,
 				56CEDB752F91925000B0E0AF /* ProfileView.swift */,
 				56CEDBB92FA0C32000B0E0AF /* UserProfileView.swift */,
+				56CEDBE42FA0E10000B0E0AF /* UserSearchView.swift */,
+				56CEDBE82FA0E20000B0E0AF /* ProfileConnectionsListView.swift */,
+				56CEDBEA2FA0E20000B0E0AF /* ProfileStatsRow.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -382,6 +418,8 @@
 				56CEDB802F91970000B0E0AF /* FirestoreService.swift in Sources */,
 				56CEDB892F91980000B0E0AF /* EventsViewModel.swift in Sources */,
 				56CEDB8A2F91980000B0E0AF /* FilterChip.swift in Sources */,
+				56CEDBD62FA0D60000B0E0AF /* AuthorProfileCache.swift in Sources */,
+				56CEDBD82FA0D60000B0E0AF /* AuthorProfileTapRow.swift in Sources */,
 				56CEDB8B2F91980000B0E0AF /* EventsMapView.swift in Sources */,
 				56CEDB8C2F91980000B0E0AF /* EventsListView.swift in Sources */,
 				56CEDB8D2F91980000B0E0AF /* EventDetailView.swift in Sources */,
@@ -398,6 +436,9 @@
 				56CEDBC82FA0C43000B0E0AF /* RemoteThumbnailImage.swift in Sources */,
 				56CEDBAB2FA0B24000B0E0AF /* EditPostView.swift in Sources */,
 				56CEDBB32FA0C31000B0E0AF /* FeedViewModel.swift in Sources */,
+				56CEDBD12FA0D50000B0E0AF /* ChatViewModel.swift in Sources */,
+				56CEDBD32FA0D50000B0E0AF /* MessagesView.swift in Sources */,
+				56CEDBD52FA0D50000B0E0AF /* ChatDetailView.swift in Sources */,
 				56CEDBB42FA0C31000B0E0AF /* FeedView.swift in Sources */,
 				56CEDBB52FA0C31000B0E0AF /* CreateFeedPostView.swift in Sources */,
 				56CEDBB72FA0C31000B0E0AF /* CreateReplyView.swift in Sources */,
@@ -405,6 +446,13 @@
 				56CEDBC22FA0C41000B0E0AF /* ProfileUserPostsSection.swift in Sources */,
 				56CEDBC42FA0C42000B0E0AF /* EditFeedPostView.swift in Sources */,
 				56CEDBC62FA0C42000B0E0AF /* ProfileUserFeedPostsSection.swift in Sources */,
+				56CEDBE12FA0E10000B0E0AF /* UserFollow.swift in Sources */,
+				56CEDBE32FA0E10000B0E0AF /* FollowViewModel.swift in Sources */,
+				56CEDBE52FA0E10000B0E0AF /* UserSearchView.swift in Sources */,
+				56CEDBE72FA0E20000B0E0AF /* UserFollower.swift in Sources */,
+				56CEDBE92FA0E20000B0E0AF /* ProfileConnectionsListView.swift in Sources */,
+				56CEDBEB2FA0E20000B0E0AF /* ProfileStatsRow.swift in Sources */,
+				56CEDBED2FA0E30000B0E0AF /* FollowMirrorMigration.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

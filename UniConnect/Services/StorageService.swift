@@ -67,6 +67,15 @@ final class StorageService {
         return try await ref.downloadURL().absoluteString
     }
 
+    func uploadChatImage(chatId: String, data: Data) async throws -> String {
+        let name = "\(UUID().uuidString).jpg"
+        let ref = storage.reference().child("chats/\(chatId)/\(name)")
+        let meta = StorageMetadata()
+        meta.contentType = "image/jpeg"
+        _ = try await ref.putDataAsync(data, metadata: meta)
+        return try await ref.downloadURL().absoluteString
+    }
+
     /// Više novih slika odjednom.
     func uploadPostImagesUnique(postId: String, datas: [Data]) async throws -> [String] {
         var urls: [String] = []

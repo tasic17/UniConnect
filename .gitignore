@@ -42,3 +42,8 @@ SingiCampus_CursorPrompt.txt
 # Za privatni timski repo mnogi ga commituju da clone radi odmah.
 # Odkomentuj sledeću liniju ako NE želiš plist na GitHubu:
 # **/GoogleService-Info.plist
+
+# Firebase Admin (migracije)
+scripts/service-account.json
+scripts/node_modules/
+scripts/package-lock.json

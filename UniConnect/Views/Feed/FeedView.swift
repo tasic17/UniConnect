@@ -1,20 +1,36 @@
 import SwiftUI
 
+private enum FeedScope: String, CaseIterable, Identifiable {
+    case following = "Praćeni"
+    case everyone = "Svi"
+
+    var id: String { rawValue }
+}
+
 struct FeedView: View {
     @EnvironmentObject private var viewModel: FeedViewModel
     @EnvironmentObject private var authViewModel: AuthViewModel
+    @EnvironmentObject private var followVM: FollowViewModel
+    @EnvironmentObject private var authorCache: AuthorProfileCache
+    @EnvironmentObject private var boardVM: BoardViewModel
+    @EnvironmentObject private var chatVM: ChatViewModel
 
     @State private var showComposer = false
-    @State private var filterMyDepartmentOnly = false
+    @State private var showUserSearch = false
+    @State private var feedScope: FeedScope = .everyone
     @State private var expandedThreads: Set<String> = []
     @State private var replyTarget: ReplyTarget?
 
     private var displayedPosts: [FeedPost] {
-        let list = viewModel.posts
-        guard filterMyDepartmentOnly, let dept = authViewModel.currentUser?.department else {
-            return list
+        var list = viewModel.posts
+        if feedScope == .following {
+            let followed = followVM.followingIds
+            let myId = authViewModel.currentUser?.uid
+            list = list.filter { post in
+                followed.contains(post.authorId) || post.authorId == myId
+            }
         }
-        return list.filter { $0.targetDepartment == nil || $0.targetDepartment == dept }
+        return list
     }
 
     private var feedRows: [(String, FeedPost)] {
@@ -27,17 +43,14 @@ struct FeedView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
-                        FilterChip(title: "Sve", isSelected: !filterMyDepartmentOnly) {
-                            filterMyDepartmentOnly = false
-                        }
-                        FilterChip(title: "Moj smer", isSelected: filterMyDepartmentOnly) {
-                            filterMyDepartmentOnly = true
-                        }
+                Picker("Objave", selection: $feedScope) {
+                    ForEach(FeedScope.allCases) { scope in
+                        Text(scope.rawValue).tag(scope)
                     }
-                    .padding(.horizontal)
                 }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
 
                 if viewModel.isLoading && viewModel.posts.isEmpty {
                     Spacer()
@@ -49,12 +62,17 @@ struct FeedView: View {
                         Image(systemName: "bubble.left.and.bubble.right")
                             .font(.largeTitle)
                             .foregroundStyle(.secondary)
-                        Text(viewModel.posts.isEmpty ? "Nema objava" : "Ništa za ovaj filter")
+                        Text(viewModel.posts.isEmpty ? "Nema objava" : emptyFilterMessage)
                             .font(.headline)
                         if viewModel.posts.isEmpty {
                             Text("Podeli prvom objavu sa +.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
+                        } else if feedScope == .following {
+                            Text("Zaprati korisnike preko pretrage (lupa) da vidiš njihove objave.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
                         }
                     }
                     .padding()
@@ -80,6 +98,14 @@ struct FeedView: View {
             .navigationTitle("Objave")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showUserSearch = true
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                    }
+                    .accessibilityLabel("Pretraga korisnika")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showComposer = true
@@ -94,6 +120,16 @@ struct FeedView: View {
                     .environmentObject(viewModel)
                     .environmentObject(authViewModel)
             }
+            .sheet(isPresented: $showUserSearch) {
+                NavigationStack {
+                    UserSearchView(mode: .discoverAll)
+                        .environmentObject(authViewModel)
+                        .environmentObject(followVM)
+                        .environmentObject(authorCache)
+                        .environmentObject(boardVM)
+                        .environmentObject(chatVM)
+                }
+            }
             .sheet(item: $replyTarget) { target in
                 CreateReplyView(
                     parentPost: target.parentPost,
@@ -105,6 +141,9 @@ struct FeedView: View {
             }
             .task {
                 await viewModel.ensureFeedLoadedIfEmpty()
+                if let uid = authViewModel.currentUser?.uid {
+                    await followVM.ensureFollowingLoaded(userId: uid)
+                }
             }
             .refreshable {
                 await viewModel.fetchPosts()
@@ -230,6 +269,10 @@ struct FeedView: View {
             get: { viewModel.errorMessage != nil },
             set: { if !$0 { viewModel.errorMessage = nil } }
         )
+    }
+
+    private var emptyFilterMessage: String {
+        feedScope == .following ? "Nema objava od praćenih" : "Ništa za prikaz"
     }
 }
 

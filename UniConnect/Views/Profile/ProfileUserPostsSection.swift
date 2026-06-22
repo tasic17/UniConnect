@@ -38,11 +38,7 @@ struct ProfileUserPostsSection: View {
                 VStack(spacing: 0) {
                     ForEach(Array(displayedPosts.enumerated()), id: \.element.id) { index, post in
                         if let id = post.id {
-                            NavigationLink {
-                                PostDetailView(postId: id)
-                                    .environmentObject(boardVM)
-                                    .environmentObject(authViewModel)
-                            } label: {
+                            NavigationLink(value: PostDetailNavigationID(postId: id)) {
                                 ProfilePostRow(post: post, showInactiveBadge: isMe && !post.isActive)
                             }
                             .buttonStyle(.plain)

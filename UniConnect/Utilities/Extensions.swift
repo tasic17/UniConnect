@@ -15,6 +15,45 @@ struct AuthorProfileNavigationID: Hashable {
     let userId: String
 }
 
+/// Vrednost za otvaranje detalja oglasa bez ugnježdenog `NavigationLink { }`.
+struct PostDetailNavigationID: Hashable {
+    let postId: String
+}
+
+enum ProfileConnectionKind: String, Hashable {
+    case followers
+    case following
+}
+
+struct ProfileConnectionsNavigationID: Hashable {
+    let userId: String
+    let kind: ProfileConnectionKind
+}
+
+/// Zajednički avatar — URL ili inicijali.
+struct ProfileAvatarImage: View {
+    let imageURL: String?
+    let name: String
+    var size: CGFloat = 40
+
+    var body: some View {
+        Group {
+            if let s = imageURL?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !s.isEmpty {
+                RemoteThumbnailImage(
+                    urlString: s,
+                    width: size,
+                    height: size,
+                    cornerRadius: size / 2
+                )
+            } else {
+                AuthorInitialsCircle(name: name, size: size)
+            }
+        }
+        .frame(width: size, height: size)
+    }
+}
+
 /// Inicijali kada nema URL profilne (oglasi / detalji).
 struct AuthorInitialsCircle: View {
     let name: String

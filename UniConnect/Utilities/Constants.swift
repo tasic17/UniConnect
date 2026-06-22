@@ -13,6 +13,9 @@ struct Constants {
         static let posts = "posts"
         static let feedPosts = "feed_posts"
         static let chats = "chats"
+        static let messages = "messages"
+        static let following = "following"
+        static let followers = "followers"
     }
 }
 

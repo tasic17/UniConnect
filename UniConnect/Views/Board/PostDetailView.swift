@@ -2,10 +2,13 @@ import SwiftUI
 
 struct PostDetailView: View {
     let postId: String
+    var navigationPath: Binding<NavigationPath>?
     @EnvironmentObject var boardVM: BoardViewModel
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var chatVM: ChatViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showEditPost = false
+    @State private var isOpeningChat = false
     /// Učitavanje direktno iz Firestore kada oglas nije u kešu table (npr. neaktivan ili otvoren sa profila).
     @State private var loadedPost: Post?
 
@@ -73,19 +76,11 @@ struct PostDetailView: View {
                         }
 
                         labeledBlock(title: "Objavio") {
-                            NavigationLink(value: AuthorProfileNavigationID(userId: post.authorId)) {
-                                HStack(spacing: 8) {
-                                    AuthorInitialsCircle(name: post.authorName, size: 28)
-                                    Text(post.authorName)
-                                        .font(.body)
-                                        .foregroundStyle(.primary)
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption2)
-                                        .foregroundStyle(.tertiary)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .fixedSize(horizontal: true, vertical: true)
+                            AuthorProfileTapRow(
+                                userId: post.authorId,
+                                fallbackName: post.authorName,
+                                navigationPath: navigationPath
+                            )
                         }
 
                         if let dept = post.department, !dept.isEmpty {
@@ -98,6 +93,23 @@ struct PostDetailView: View {
                         labeledBlock(title: "Datum") {
                             Text(post.createdAt.formatted(date: .long, time: .shortened))
                                 .font(.body)
+                        }
+
+                        if !isAuthor, authViewModel.currentUser != nil {
+                            Button {
+                                Task { await openMessageThread(post: post) }
+                            } label: {
+                                if isOpeningChat {
+                                    ProgressView()
+                                        .frame(maxWidth: .infinity)
+                                } else {
+                                    Label("Pošalji poruku", systemImage: "message.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(Constants.Colors.primary)
+                            .disabled(isOpeningChat)
                         }
 
                         if isAuthor {
@@ -164,6 +176,21 @@ struct PostDetailView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             content()
+        }
+    }
+
+    private func openMessageThread(post: Post) async {
+        guard let uid = authViewModel.currentUser?.uid,
+              let postId = post.id else { return }
+        isOpeningChat = true
+        defer { isOpeningChat = false }
+        if let chatId = await chatVM.openChat(
+            currentUserId: uid,
+            otherUserId: post.authorId,
+            postId: postId,
+            postTitle: post.title
+        ) {
+            chatVM.requestOpenChat(chatId: chatId)
         }
     }
 }

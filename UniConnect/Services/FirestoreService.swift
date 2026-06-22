@@ -253,4 +253,400 @@ final class FirestoreService {
             await StorageService.shared.deleteDownloadURLs(imageURLsToPurge)
         }
     }
+
+    // MARK: - Chats / poruke
+
+    func fetchChats(for userId: String) async throws -> [Chat] {
+        let snapshot = try await db.collection(Constants.Firestore.chats)
+            .whereField("participants", arrayContains: userId)
+            .getDocuments()
+        let items = try snapshot.documents.compactMap { try $0.data(as: Chat.self) }
+        return items.sorted { $0.lastMessageAt > $1.lastMessageAt }
+    }
+
+    /// Pronađi postojeći razgovor ili kreiraj novi (npr. sa oglasa).
+    func findOrCreateChat(
+        currentUserId: String,
+        otherUserId: String,
+        postId: String?,
+        postTitle: String?
+    ) async throws -> String {
+        let participants = [currentUserId, otherUserId].sorted()
+        let key = Chat.participantKey(for: participants, postId: postId)
+
+        let existing = try await db.collection(Constants.Firestore.chats)
+            .whereField("participants", arrayContains: currentUserId)
+            .getDocuments()
+        if let doc = existing.documents.first(where: { doc in
+            (try? doc.data(as: Chat.self))?.participantKey == key
+        }) {
+            return doc.documentID
+        }
+
+        let preview = postTitle.map { "Oglas: \($0)" } ?? "Razgovor započet"
+        let chat = Chat(
+            participants: participants,
+            participantKey: key,
+            postId: postId,
+            postTitle: postTitle,
+            lastMessage: preview,
+            lastMessageAt: Date(),
+            createdAt: Date(),
+            unreadCounts: [:]
+        )
+        let ref = try db.collection(Constants.Firestore.chats).addDocument(from: chat)
+        return ref.documentID
+    }
+
+    func sendMessage(
+        chatId: String,
+        senderId: String,
+        recipientId: String,
+        text: String?,
+        imageURL: String? = nil
+    ) async throws {
+        let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let image = imageURL?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !trimmed.isEmpty || !image.isEmpty else { return }
+
+        let preview: String
+        if !trimmed.isEmpty {
+            preview = trimmed
+        } else {
+            preview = "Slika"
+        }
+
+        let chatRef = db.collection(Constants.Firestore.chats).document(chatId)
+        let messageRef = chatRef.collection(Constants.Firestore.messages).document()
+        let message = Message(
+            senderId: senderId,
+            text: trimmed,
+            imageURL: image.isEmpty ? nil : image,
+            createdAt: Date(),
+            isRead: false
+        )
+        let batch = db.batch()
+        try batch.setData(from: message, forDocument: messageRef)
+        batch.updateData([
+            "lastMessage": preview,
+            "lastMessageAt": Timestamp(date: Date()),
+            "unreadCounts.\(recipientId)": FieldValue.increment(Int64(1))
+        ], forDocument: chatRef)
+        try await batch.commit()
+    }
+
+    func deleteChat(chatId: String, userId: String) async throws {
+        let chatRef = db.collection(Constants.Firestore.chats).document(chatId)
+        let chatDoc = try await chatRef.getDocument()
+        guard let chat = try? chatDoc.data(as: Chat.self),
+              chat.participants.contains(userId) else {
+            throw NSError(
+                domain: "FirestoreService",
+                code: 403,
+                userInfo: [NSLocalizedDescriptionKey: "Nemaš dozvolu da obrišeš ovaj razgovor."]
+            )
+        }
+
+        let messagesSnap = try await chatRef.collection(Constants.Firestore.messages).getDocuments()
+        let imageURLs = messagesSnap.documents.compactMap { doc -> String? in
+            (try? doc.data(as: Message.self))?.imageURL
+        }
+
+        var batch = db.batch()
+        var ops = 0
+        for doc in messagesSnap.documents {
+            batch.deleteDocument(doc.reference)
+            ops += 1
+            if ops >= 450 {
+                try await batch.commit()
+                batch = db.batch()
+                ops = 0
+            }
+        }
+        batch.deleteDocument(chatRef)
+        try await batch.commit()
+
+        await StorageService.shared.deleteDownloadURLs(imageURLs.compactMap { $0 })
+    }
+
+    func markChatRead(chatId: String, userId: String) async throws {
+        try await db.collection(Constants.Firestore.chats).document(chatId).updateData([
+            "unreadCounts.\(userId)": 0
+        ])
+    }
+
+    func listenChats(
+        userId: String,
+        onChange: @escaping ([Chat]) -> Void,
+        onError: @escaping (Error) -> Void
+    ) -> ListenerRegistration {
+        db.collection(Constants.Firestore.chats)
+            .whereField("participants", arrayContains: userId)
+            .addSnapshotListener { snapshot, error in
+                if let error {
+                    onError(error)
+                    return
+                }
+                guard let snapshot else {
+                    onChange([])
+                    return
+                }
+                let chats: [Chat] = snapshot.documents.compactMap { doc in
+                    try? doc.data(as: Chat.self)
+                }
+                onChange(chats.sorted { $0.lastMessageAt > $1.lastMessageAt })
+            }
+    }
+
+    func listenMessages(
+        chatId: String,
+        onChange: @escaping ([Message]) -> Void,
+        onError: @escaping (Error) -> Void
+    ) -> ListenerRegistration {
+        db.collection(Constants.Firestore.chats).document(chatId)
+            .collection(Constants.Firestore.messages)
+            .order(by: "createdAt", descending: false)
+            .addSnapshotListener { snapshot, error in
+                if let error {
+                    onError(error)
+                    return
+                }
+                guard let snapshot else {
+                    onChange([])
+                    return
+                }
+                let messages: [Message] = snapshot.documents.compactMap { doc in
+                    try? doc.data(as: Message.self)
+                }
+                onChange(messages)
+            }
+    }
+
+    // MARK: - Korisnici / pretraga / praćenje
+
+    /// Pretraga po imenu (prefiks + lokalni filter za deo reči).
+    func searchUsers(matching query: String, excludingUserId: String?) async throws -> [AppUser] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else { return [] }
+
+        let col = db.collection(Constants.Firestore.users)
+        var results: [AppUser] = []
+
+        let prefixSnap = try await col
+            .order(by: "displayName")
+            .start(at: [trimmed])
+            .end(at: [trimmed + "\u{f8ff}"])
+            .limit(to: 30)
+            .getDocuments()
+        results.append(contentsOf: try prefixSnap.documents.compactMap { try $0.data(as: AppUser.self) })
+
+        if results.count < 12 {
+            let broadSnap = try await col.order(by: "displayName").limit(to: 120).getDocuments()
+            let broad = try broadSnap.documents.compactMap { try $0.data(as: AppUser.self) }
+            let needle = trimmed.lowercased()
+            for user in broad where !results.contains(where: { $0.uid == user.uid }) {
+                if user.displayName.localizedCaseInsensitiveContains(needle)
+                    || user.department.localizedCaseInsensitiveContains(needle) {
+                    results.append(user)
+                }
+                if results.count >= 30 { break }
+            }
+        }
+
+        if let excludingUserId {
+            results.removeAll { $0.uid == excludingUserId }
+        }
+        return results.sorted {
+            $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+        }
+    }
+
+    func fetchFollowing(userId: String) async throws -> [UserFollow] {
+        let snap = try await db.collection(Constants.Firestore.users)
+            .document(userId)
+            .collection(Constants.Firestore.following)
+            .getDocuments()
+        let list = try snap.documents.compactMap { try $0.data(as: UserFollow.self) }
+        return list.sorted {
+            $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+        }
+    }
+
+    func fetchFollowers(userId: String) async throws -> [UserFollower] {
+        let snap = try await db.collection(Constants.Firestore.users)
+            .document(userId)
+            .collection(Constants.Firestore.followers)
+            .getDocuments()
+        let list = try snap.documents.compactMap { try $0.data(as: UserFollower.self) }
+        return list.sorted {
+            $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+        }
+    }
+
+    func fetchConnectionCounts(userId: String) async throws -> (followers: Int, following: Int) {
+        async let followersSnap = db.collection(Constants.Firestore.users)
+            .document(userId)
+            .collection(Constants.Firestore.followers)
+            .getDocuments()
+        async let followingSnap = db.collection(Constants.Firestore.users)
+            .document(userId)
+            .collection(Constants.Firestore.following)
+            .getDocuments()
+        let (followers, following) = try await (followersSnap, followingSnap)
+        return (followers.count, following.count)
+    }
+
+    func isFollowing(fromUserId: String, targetUserId: String) async throws -> Bool {
+        let doc = try await db.collection(Constants.Firestore.users)
+            .document(fromUserId)
+            .collection(Constants.Firestore.following)
+            .document(targetUserId)
+            .getDocument()
+        return doc.exists
+    }
+
+    func followUser(fromUser: AppUser, target: AppUser) async throws {
+        guard fromUser.uid != target.uid else { return }
+        let followingRef = db.collection(Constants.Firestore.users)
+            .document(fromUser.uid)
+            .collection(Constants.Firestore.following)
+            .document(target.uid)
+        let follow = UserFollow(
+            id: target.uid,
+            targetUserId: target.uid,
+            displayName: target.displayName,
+            profileImageURL: target.profileImageURL,
+            createdAt: Date()
+        )
+        try followingRef.setData(from: follow)
+
+        let followersRef = db.collection(Constants.Firestore.users)
+            .document(target.uid)
+            .collection(Constants.Firestore.followers)
+            .document(fromUser.uid)
+        let follower = UserFollower(
+            id: fromUser.uid,
+            followerUserId: fromUser.uid,
+            displayName: fromUser.displayName,
+            profileImageURL: fromUser.profileImageURL,
+            createdAt: Date()
+        )
+        try followersRef.setData(from: follower)
+    }
+
+    func unfollowUser(fromUserId: String, targetUserId: String) async throws {
+        try await db.collection(Constants.Firestore.users)
+            .document(fromUserId)
+            .collection(Constants.Firestore.following)
+            .document(targetUserId)
+            .delete()
+        try await db.collection(Constants.Firestore.users)
+            .document(targetUserId)
+            .collection(Constants.Firestore.followers)
+            .document(fromUserId)
+            .delete()
+    }
+
+    /// Popunjava `users/{target}/followers/{me}` za sve koje `user` već prati (stari zapisi pre mirror logike).
+    /// Vraća broj novo kreiranih dokumenata.
+    @discardableResult
+    func migrateFollowersMirror(for user: AppUser) async throws -> Int {
+        let following = try await fetchFollowing(userId: user.uid)
+        guard !following.isEmpty else { return 0 }
+
+        var created = 0
+        for entry in following {
+            let targetId = entry.targetUserId
+            guard targetId != user.uid else { continue }
+
+            let ref = db.collection(Constants.Firestore.users)
+                .document(targetId)
+                .collection(Constants.Firestore.followers)
+                .document(user.uid)
+
+            let existing = try await ref.getDocument()
+            if existing.exists { continue }
+
+            let follower = UserFollower(
+                id: user.uid,
+                followerUserId: user.uid,
+                displayName: user.displayName,
+                profileImageURL: user.profileImageURL,
+                createdAt: entry.createdAt
+            )
+            try ref.setData(from: follower)
+            created += 1
+        }
+        return created
+    }
+
+    func listenFollowers(
+        userId: String,
+        onChange: @escaping ([UserFollower]) -> Void,
+        onError: @escaping (Error) -> Void
+    ) -> ListenerRegistration {
+        db.collection(Constants.Firestore.users)
+            .document(userId)
+            .collection(Constants.Firestore.followers)
+            .addSnapshotListener { snapshot, error in
+                if let error {
+                    onError(error)
+                    return
+                }
+                let list: [UserFollower] = snapshot?.documents.compactMap {
+                    try? $0.data(as: UserFollower.self)
+                } ?? []
+                onChange(list.sorted {
+                    $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+                })
+            }
+    }
+
+    func listenFollowing(
+        userId: String,
+        onChange: @escaping ([UserFollow]) -> Void,
+        onError: @escaping (Error) -> Void
+    ) -> ListenerRegistration {
+        db.collection(Constants.Firestore.users)
+            .document(userId)
+            .collection(Constants.Firestore.following)
+            .addSnapshotListener { snapshot, error in
+                if let error {
+                    onError(error)
+                    return
+                }
+                let list: [UserFollow] = snapshot?.documents.compactMap {
+                    try? $0.data(as: UserFollow.self)
+                } ?? []
+                onChange(list.sorted {
+                    $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+                })
+            }
+    }
+
+    func listenConnectionCounts(
+        userId: String,
+        onChange: @escaping (_ followers: Int, _ following: Int) -> Void
+    ) -> [ListenerRegistration] {
+        var followersCount = 0
+        var followingCount = 0
+
+        let followersListener = db.collection(Constants.Firestore.users)
+            .document(userId)
+            .collection(Constants.Firestore.followers)
+            .addSnapshotListener { snapshot, _ in
+                followersCount = snapshot?.documents.count ?? 0
+                onChange(followersCount, followingCount)
+            }
+
+        let followingListener = db.collection(Constants.Firestore.users)
+            .document(userId)
+            .collection(Constants.Firestore.following)
+            .addSnapshotListener { snapshot, _ in
+                followingCount = snapshot?.documents.count ?? 0
+                onChange(followersCount, followingCount)
+            }
+
+        return [followersListener, followingListener]
+    }
 }
