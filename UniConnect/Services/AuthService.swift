@@ -56,8 +56,23 @@ final class AuthService {
         return try doc.data(as: AppUser.self)
     }
 
+    /// Javni profil po UID (isti format kao `users/{uid}`) — za feed, oglase i tuđi profil.
+    func fetchUser(uid: String) async throws -> AppUser? {
+        let doc = try await db.collection(Constants.Firestore.users).document(uid).getDocument()
+        guard doc.exists else { return nil }
+        return try doc.data(as: AppUser.self)
+    }
+
     /// Ažurira dokument `users/{uid}` u Firestore-u (izvor istine za UI).
-    func updateUserProfile(displayName: String, year: Int, department: String, bio: String?) async throws {
+    /// Slika: `newProfileImageURL` postavi novi URL; `shouldClearProfileImage` obriše polje; oba `false`/`nil` = slika se ne dira.
+    func updateUserProfile(
+        displayName: String,
+        year: Int,
+        department: String,
+        bio: String?,
+        newProfileImageURL: String?,
+        shouldClearProfileImage: Bool
+    ) async throws {
         guard let uid = Auth.auth().currentUser?.uid else { throw AuthServiceError.notSignedIn }
 
         var data: [String: Any] = [
@@ -70,6 +85,11 @@ final class AuthService {
             data["bio"] = FieldValue.delete()
         } else {
             data["bio"] = trimmedBio
+        }
+        if shouldClearProfileImage {
+            data["profileImageURL"] = FieldValue.delete()
+        } else if let url = newProfileImageURL {
+            data["profileImageURL"] = url
         }
 
         try await db.collection(Constants.Firestore.users).document(uid).updateData(data)

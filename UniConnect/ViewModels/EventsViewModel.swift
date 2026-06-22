@@ -13,6 +13,13 @@ final class EventsViewModel: ObservableObject {
         return events.filter { $0.category == category }
     }
 
+    /// Izbegava dupli fetch kad su događaji već učitani u pozadini (`MainTabView`).
+    @MainActor
+    func ensureEventsLoadedIfEmpty() async {
+        guard events.isEmpty else { return }
+        await fetchEvents()
+    }
+
     @MainActor
     func fetchEvents() async {
         isLoading = true
@@ -109,7 +116,8 @@ final class EventsViewModel: ObservableObject {
     func toggleRSVP(event: Event) async {
         guard let userId = Auth.auth().currentUser?.uid,
               let eventId = event.id else { return }
-        let currentlyAttending = event.attendees.contains(userId)
+        // Koristi `isAttending` (isti izvor kao UI); `attendees` može biti prazan zbog keša/pravila.
+        let currentlyAttending = event.isAttending
         do {
             try await FirestoreService.shared.toggleRSVP(
                 eventId: eventId,

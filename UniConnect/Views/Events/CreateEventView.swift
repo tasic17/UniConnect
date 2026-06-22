@@ -95,6 +95,9 @@ struct CreateEventView: View {
             authorId: user.uid,
             authorName: user.displayName
         )
-        if ok { dismiss() }
+        if ok {
+            await Task.yield()
+            await MainActor.run { dismiss() }
+        }
     }
 }

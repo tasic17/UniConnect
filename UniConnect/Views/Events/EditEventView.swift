@@ -102,6 +102,9 @@ struct EditEventView: View {
             latitude: lat,
             longitude: lon
         )
-        if ok { dismiss() }
+        if ok {
+            await Task.yield()
+            await MainActor.run { dismiss() }
+        }
     }
 }

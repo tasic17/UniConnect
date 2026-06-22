@@ -44,8 +44,19 @@ struct EventDetailView: View {
                         }
 
                         labeledSection(label: "Organizator") {
-                            Text(event.authorName)
-                                .font(.body)
+                            NavigationLink(value: AuthorProfileNavigationID(userId: event.authorId)) {
+                                HStack(spacing: 8) {
+                                    AuthorInitialsCircle(name: event.authorName, size: 28)
+                                    Text(event.authorName)
+                                        .font(.body)
+                                        .foregroundStyle(.primary)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .fixedSize(horizontal: true, vertical: true)
                         }
 
                         labeledSection(label: "Kategorija") {

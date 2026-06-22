@@ -1,0 +1,38 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isImage() {
+      return request.resource == null
+        || request.resource.contentType.matches('image/.*');
+    }
+
+    // Profilna: samo svoj fajl (profile_images/{uid}.jpg)
+    match /profile_images/{fileName} {
+      allow read: if signedIn();
+      allow write: if signedIn()
+        && fileName == request.auth.uid + '.jpg'
+        && isImage();
+      allow delete: if signedIn()
+        && fileName == request.auth.uid + '.jpg';
+    }
+
+    // Slike oglasa: posts/{postId}/{file}.jpg
+    match /posts/{postId}/{fileName} {
+      allow read: if signedIn();
+      allow write: if signedIn() && isImage();
+      allow delete: if signedIn();
+    }
+
+    // Slike feed objava: feed_posts/{postId}/{file}.jpg
+    match /feed_posts/{postId}/{fileName} {
+      allow read: if signedIn();
+      allow write: if signedIn() && isImage();
+      allow delete: if signedIn();
+    }
+  }
+}

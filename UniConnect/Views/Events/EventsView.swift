@@ -72,7 +72,7 @@ struct EventsView: View {
                     .environmentObject(authViewModel)
             }
             .task {
-                await viewModel.fetchEvents()
+                await viewModel.ensureEventsLoadedIfEmpty()
             }
             .refreshable {
                 await viewModel.fetchEvents()
@@ -80,6 +80,10 @@ struct EventsView: View {
             .navigationDestination(for: String.self) { eventId in
                 EventDetailView(eventId: eventId)
                     .environmentObject(viewModel)
+                    .environmentObject(authViewModel)
+            }
+            .navigationDestination(for: AuthorProfileNavigationID.self) { target in
+                UserProfileView(userId: target.userId)
                     .environmentObject(authViewModel)
             }
         }

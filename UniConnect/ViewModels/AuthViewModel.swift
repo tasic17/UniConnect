@@ -70,17 +70,56 @@ final class AuthViewModel: ObservableObject {
     }
 
     @MainActor
-    func updateProfile(displayName: String, year: Int, department: String, bio: String?) async -> Bool {
+    func updateProfile(
+        displayName: String,
+        year: Int,
+        department: String,
+        bio: String?,
+        profileImageData: Data?,
+        removeProfileImage: Bool
+    ) async -> Bool {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            try await AuthService.shared.updateUserProfile(
-                displayName: displayName,
-                year: year,
-                department: department,
-                bio: bio
-            )
+            guard let uid = currentUser?.uid else { return false }
+            let oldPhotoURL = currentUser?.profileImageURL
+
+            if let data = profileImageData {
+                if let old = oldPhotoURL, !old.isEmpty {
+                    await StorageService.shared.deleteDownloadURLs([old])
+                }
+                let url = try await StorageService.shared.uploadProfileImage(uid: uid, data: data)
+                try await AuthService.shared.updateUserProfile(
+                    displayName: displayName,
+                    year: year,
+                    department: department,
+                    bio: bio,
+                    newProfileImageURL: url,
+                    shouldClearProfileImage: false
+                )
+            } else if removeProfileImage {
+                if let old = oldPhotoURL, !old.isEmpty {
+                    await StorageService.shared.deleteDownloadURLs([old])
+                }
+                try await AuthService.shared.updateUserProfile(
+                    displayName: displayName,
+                    year: year,
+                    department: department,
+                    bio: bio,
+                    newProfileImageURL: nil,
+                    shouldClearProfileImage: true
+                )
+            } else {
+                try await AuthService.shared.updateUserProfile(
+                    displayName: displayName,
+                    year: year,
+                    department: department,
+                    bio: bio,
+                    newProfileImageURL: nil,
+                    shouldClearProfileImage: false
+                )
+            }
             await fetchCurrentUser()
             return true
         } catch {

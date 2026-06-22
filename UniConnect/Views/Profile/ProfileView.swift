@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var boardVM: BoardViewModel
     @State private var showEditProfile = false
 
     var body: some View {
@@ -60,6 +61,10 @@ struct ProfileView: View {
             .refreshable {
                 await authViewModel.fetchCurrentUser()
             }
+            .navigationDestination(for: AuthorProfileNavigationID.self) { target in
+                UserProfileView(userId: target.userId)
+                    .environmentObject(authViewModel)
+            }
         }
     }
 
@@ -94,6 +99,11 @@ struct ProfileView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
+                if let uid = authViewModel.currentUser?.uid {
+                    ProfileUserPostsSection(userId: uid, isMe: true)
+                    ProfileUserFeedPostsSection(userId: uid, isMe: true)
+                }
+
                 Button(role: .destructive) {
                     authViewModel.logout()
                 } label: {
@@ -105,22 +115,56 @@ struct ProfileView: View {
             }
             .padding()
         }
+        .refreshable {
+            await authViewModel.fetchCurrentUser()
+            NotificationCenter.default.post(name: .boardPostsDidChange, object: nil)
+            NotificationCenter.default.post(name: .feedPostsDidChange, object: nil)
+        }
     }
 
     private func avatarBlock(for user: AppUser) -> some View {
         VStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(Constants.Colors.primary.opacity(0.15))
+            Group {
+                if let urlStr = user.profileImageURL?.trimmingCharacters(in: .whitespacesAndNewlines),
+                   !urlStr.isEmpty,
+                   let url = URL(string: urlStr) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        case .failure:
+                            avatarFallback(name: user.displayName)
+                        case .empty:
+                            ProgressView()
+                        @unknown default:
+                            avatarFallback(name: user.displayName)
+                        }
+                    }
+                    .id(urlStr)
                     .frame(width: 96, height: 96)
-                Text(initials(from: user.displayName))
-                    .font(.title.bold())
-                    .foregroundStyle(Constants.Colors.primary)
+                    .clipShape(Circle())
+                } else {
+                    avatarFallback(name: user.displayName)
+                }
             }
             Text(user.displayName)
                 .font(.title2.bold())
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private func avatarFallback(name: String) -> some View {
+        ZStack {
+            Circle()
+                .fill(Constants.Colors.primary.opacity(0.15))
+                .frame(width: 96, height: 96)
+            Text(initials(from: name))
+                .font(.title.bold())
+                .foregroundStyle(Constants.Colors.primary)
+        }
+        .frame(width: 96, height: 96)
     }
 
     private func profileRow(title: String, value: String, icon: String) -> some View {
