@@ -167,9 +167,10 @@ struct MessagesView: View {
     @ViewBuilder
     private func chatRow(chat: Chat, chatId: String, uid: String) -> some View {
         let otherId = chat.otherParticipantId(than: uid)
-        let title = chatTitle(for: chat)
+        let title = chatTitle(for: chat, uid: uid)
         let unread = chat.unreadCount(for: uid)
         let isSelected = selectedChatIds.contains(chatId)
+        let avatarURL = otherId.flatMap { resolvedAvatarURL(for: $0) }
 
         Group {
             if isSelectingChats {
@@ -180,7 +181,7 @@ struct MessagesView: View {
                         chat: chat,
                         title: title,
                         subtitle: chat.lastMessage,
-                        avatarURL: otherId.flatMap { chatVM.participantPhotoURL(for: $0) },
+                        avatarURL: avatarURL,
                         avatarName: title,
                         unreadCount: unread,
                         showsSelection: true,
@@ -194,7 +195,7 @@ struct MessagesView: View {
                         chat: chat,
                         title: title,
                         subtitle: chat.lastMessage,
-                        avatarURL: otherId.flatMap { chatVM.participantPhotoURL(for: $0) },
+                        avatarURL: avatarURL,
                         avatarName: title,
                         unreadCount: unread,
                         showsSelection: false,
@@ -222,6 +223,11 @@ struct MessagesView: View {
             Rectangle()
                 .fill(Color(.separator))
                 .frame(height: 0.5)
+        }
+        .task(id: otherId) {
+            guard let otherId else { return }
+            await authorCache.refresh(authorId: otherId)
+            await chatVM.refreshParticipantProfile(userId: otherId)
         }
     }
 
@@ -256,9 +262,16 @@ struct MessagesView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private func chatTitle(for chat: Chat) -> String {
-        guard let uid = authViewModel.currentUser?.uid else { return "Razgovor" }
-        return chatVM.chatTitle(for: chat, currentUserId: uid)
+    private func chatTitle(for chat: Chat, uid: String) -> String {
+        guard let otherId = chat.otherParticipantId(than: uid) else {
+            return chat.postTitle ?? "Razgovor"
+        }
+        let fallback = chatVM.displayName(for: otherId, currentUserId: uid)
+        return authorCache.resolvedName(for: otherId, fallback: fallback)
+    }
+
+    private func resolvedAvatarURL(for userId: String) -> String? {
+        authorCache.photoURL(for: userId) ?? chatVM.participantPhotoURL(for: userId)
     }
 
     private func titleForChatId(_ chatId: String) -> String {
@@ -266,7 +279,7 @@ struct MessagesView: View {
               let uid = authViewModel.currentUser?.uid else {
             return "Razgovor"
         }
-        return chatVM.chatTitle(for: chat, currentUserId: uid)
+        return chatTitle(for: chat, uid: uid)
     }
 
     private var errorBinding: Binding<Bool> {

@@ -225,25 +225,28 @@ final class ChatViewModel: ObservableObject {
     }
 
     @MainActor
+    func refreshParticipantProfile(userId: String) async {
+        guard !userId.isEmpty else { return }
+        let name: String
+        let photo: String
+        if let user = try? await AuthService.shared.fetchUser(uid: userId) {
+            name = user.displayName
+            photo = user.profileImageURL?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        } else {
+            name = "Korisnik"
+            photo = ""
+        }
+        participantNameCache[userId] = name
+        participantPhotoURLCache[userId] = photo
+    }
+
+    @MainActor
     private func prefetchParticipantProfiles(for chats: [Chat], currentUserId: String) async {
         let ids = Set(chats.flatMap(\.participants)).subtracting([currentUserId])
         await withTaskGroup(of: Void.self) { group in
-            for uid in ids where participantNameCache[uid] == nil || participantPhotoURLCache[uid] == nil {
+            for uid in ids {
                 group.addTask { [weak self] in
-                    guard let self else { return }
-                    let name: String
-                    let photo: String
-                    if let user = try? await AuthService.shared.fetchUser(uid: uid) {
-                        name = user.displayName
-                        photo = user.profileImageURL?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                    } else {
-                        name = "Korisnik"
-                        photo = ""
-                    }
-                    await MainActor.run {
-                        self.participantNameCache[uid] = name
-                        self.participantPhotoURLCache[uid] = photo
-                    }
+                    await self?.refreshParticipantProfile(userId: uid)
                 }
             }
         }

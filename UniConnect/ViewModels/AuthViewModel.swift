@@ -50,6 +50,17 @@ final class AuthViewModel: ObservableObject {
         isLoading = false
     }
 
+    /// `nil` = uspeh; inače poruka greške za prikaz na ekranu reset lozinke.
+    @MainActor
+    func resetPassword(email: String) async -> String? {
+        do {
+            try await AuthService.shared.resetPassword(email: email)
+            return nil
+        } catch {
+            return error.localizedDescription
+        }
+    }
+
     @MainActor
     func logout() {
         do {
@@ -83,7 +94,9 @@ final class AuthViewModel: ObservableObject {
         defer { isLoading = false }
         do {
             guard let uid = currentUser?.uid else { return false }
-            let oldPhotoURL = currentUser?.profileImageURL
+            let previousName = currentUser?.displayName
+            let previousPhotoURL = currentUser?.profileImageURL
+            let oldPhotoURL = previousPhotoURL
 
             if let data = profileImageData {
                 if let old = oldPhotoURL, !old.isEmpty {
@@ -121,6 +134,25 @@ final class AuthViewModel: ObservableObject {
                 )
             }
             await fetchCurrentUser()
+            if let user = currentUser {
+                do {
+                    let mirrorCount = try await FirestoreService.shared.syncFollowProfileMirrors(
+                        userId: user.uid,
+                        displayName: user.displayName,
+                        profileImageURL: user.profileImageURL,
+                        previousDisplayName: previousName,
+                        previousProfileImageURL: previousPhotoURL
+                    )
+                    #if DEBUG
+                    print("[FollowProfileSync] Ažurirano \(mirrorCount) follow zapisa za \(user.uid).")
+                    #endif
+                } catch {
+                    #if DEBUG
+                    print("[FollowProfileSync] Greška: \(error.localizedDescription)")
+                    #endif
+                }
+                NotificationCenter.default.post(name: .userProfileDidUpdate, object: user.uid)
+            }
             return true
         } catch {
             errorMessage = error.localizedDescription

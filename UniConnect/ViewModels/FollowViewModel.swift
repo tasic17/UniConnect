@@ -94,4 +94,5 @@ final class FollowViewModel: ObservableObject {
 
 extension Notification.Name {
     static let profileConnectionsDidChange = Notification.Name("UniConnect.profileConnectionsDidChange")
+    static let userProfileDidUpdate = Notification.Name("UniConnect.userProfileDidUpdate")
 }

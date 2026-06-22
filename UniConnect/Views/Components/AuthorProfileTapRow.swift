@@ -51,3 +51,34 @@ struct AuthorProfileTapRow: View {
         }
     }
 }
+
+/// Red liste (Pratioci / Pratiš) sa uvek svežim imenom i slikom iz `users/{uid}`.
+struct LiveProfileConnectionRow: View {
+    let userId: String
+    let fallbackName: String
+    var fallbackPhotoURL: String? = nil
+
+    @EnvironmentObject private var authorCache: AuthorProfileCache
+
+    private var name: String {
+        authorCache.resolvedName(for: userId, fallback: fallbackName)
+    }
+
+    private var photoURL: String? {
+        authorCache.photoURL(for: userId) ?? fallbackPhotoURL
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ProfileAvatarImage(imageURL: photoURL, name: name, size: 44)
+            Text(DisplayNameFormat.firstLast(from: name))
+                .font(.headline)
+                .foregroundStyle(.primary)
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 4)
+        .task(id: userId) {
+            await authorCache.refresh(authorId: userId)
+        }
+    }
+}

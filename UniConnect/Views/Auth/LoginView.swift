@@ -5,6 +5,7 @@ struct LoginView: View {
 
     @State private var email = ""
     @State private var password = ""
+    @State private var showForgotPassword = false
 
     var isFormValid: Bool {
         Validators.isValidEmail(email) && Validators.isValidPassword(password)
@@ -50,12 +51,21 @@ struct LoginView: View {
                 .tint(Constants.Colors.primary)
                 .disabled(!isFormValid || authViewModel.isLoading)
 
+                Button("Zaboravljena lozinka?") {
+                    showForgotPassword = true
+                }
+                .font(.subheadline)
+
                 NavigationLink("Nemas nalog? Registruj se", destination: RegisterView())
                     .font(.subheadline)
 
                 Spacer()
             }
             .padding()
+            .sheet(isPresented: $showForgotPassword) {
+                ForgotPasswordView(prefilledEmail: email)
+                    .environmentObject(authViewModel)
+            }
         }
     }
 }

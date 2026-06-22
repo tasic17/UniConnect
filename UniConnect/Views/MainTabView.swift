@@ -85,5 +85,13 @@ struct MainTabView: View {
                 selectedTab = .messages
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .userProfileDidUpdate)) { notification in
+            guard let uid = notification.object as? String else { return }
+            authorCache.invalidate(authorId: uid)
+            Task {
+                await authorCache.refresh(authorId: uid)
+                await chatVM.refreshParticipantProfile(userId: uid)
+            }
+        }
     }
 }

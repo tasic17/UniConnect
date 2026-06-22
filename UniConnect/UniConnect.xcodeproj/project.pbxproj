@@ -15,6 +15,7 @@
 		56CEDB5C2F9186C600B0E0AF /* UniConnectApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB462F9186C600B0E0AF /* UniConnectApp.swift */; };
 		56CEDB5D2F9186C600B0E0AF /* FeedPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB402F9186C600B0E0AF /* FeedPost.swift */; };
 		56CEDB5E2F9186C600B0E0AF /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB4E2F9186C600B0E0AF /* RegisterView.swift */; };
+		56CEDBF12FA0F00000B0E0AF /* ForgotPasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBF02FA0F00000B0E0AF /* ForgotPasswordView.swift */; };
 		56CEDB5F2F9186C600B0E0AF /* Post.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB422F9186C600B0E0AF /* Post.swift */; };
 		56CEDB602F9186C600B0E0AF /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB3F2F9186C600B0E0AF /* Event.swift */; };
 		56CEDB612F9186C600B0E0AF /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB3E2F9186C600B0E0AF /* Chat.swift */; };
@@ -100,6 +101,7 @@
 		56CEDB4B2F9186C600B0E0AF /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
 		56CEDB4D2F9186C600B0E0AF /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		56CEDB4E2F9186C600B0E0AF /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
+		56CEDBF02FA0F00000B0E0AF /* ForgotPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgotPasswordView.swift; sourceTree = "<group>"; };
 		56CEDB562F9186C600B0E0AF /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		56CEDB752F91925000B0E0AF /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		56CEDB7B2F91950000B0E0AF /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
@@ -230,6 +232,7 @@
 			children = (
 				56CEDB4D2F9186C600B0E0AF /* LoginView.swift */,
 				56CEDB4E2F9186C600B0E0AF /* RegisterView.swift */,
+				56CEDBF02FA0F00000B0E0AF /* ForgotPasswordView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -404,6 +407,7 @@
 				56CEDB5C2F9186C600B0E0AF /* UniConnectApp.swift in Sources */,
 				56CEDB5D2F9186C600B0E0AF /* FeedPost.swift in Sources */,
 				56CEDB5E2F9186C600B0E0AF /* RegisterView.swift in Sources */,
+				56CEDBF12FA0F00000B0E0AF /* ForgotPasswordView.swift in Sources */,
 				56CEDB5F2F9186C600B0E0AF /* Post.swift in Sources */,
 				56CEDB602F9186C600B0E0AF /* Event.swift in Sources */,
 				56CEDB762F91925000B0E0AF /* ProfileView.swift in Sources */,

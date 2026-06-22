@@ -5,6 +5,7 @@ struct ProfileConnectionsListView: View {
     let userId: String
     let kind: ProfileConnectionKind
 
+    @EnvironmentObject private var authorCache: AuthorProfileCache
     @State private var following: [UserFollow] = []
     @State private var followers: [UserFollower] = []
     @State private var isLoading = true
@@ -43,18 +44,20 @@ struct ProfileConnectionsListView: View {
                     if kind == .following {
                         ForEach(following) { entry in
                             NavigationLink(value: AuthorProfileNavigationID(userId: entry.targetUserId)) {
-                                connectionRow(
-                                    name: entry.displayName,
-                                    photoURL: entry.profileImageURL
+                                LiveProfileConnectionRow(
+                                    userId: entry.targetUserId,
+                                    fallbackName: entry.displayName,
+                                    fallbackPhotoURL: entry.profileImageURL
                                 )
                             }
                         }
                     } else {
                         ForEach(followers) { entry in
                             NavigationLink(value: AuthorProfileNavigationID(userId: entry.followerUserId)) {
-                                connectionRow(
-                                    name: entry.displayName,
-                                    photoURL: entry.profileImageURL
+                                LiveProfileConnectionRow(
+                                    userId: entry.followerUserId,
+                                    fallbackName: entry.displayName,
+                                    fallbackPhotoURL: entry.profileImageURL
                                 )
                             }
                         }
@@ -82,17 +85,6 @@ struct ProfileConnectionsListView: View {
         kind == .followers ? "Nema pratilaca" : "Nikoga ne prati"
     }
 
-    private func connectionRow(name: String, photoURL: String?) -> some View {
-        HStack(spacing: 12) {
-            ProfileAvatarImage(imageURL: photoURL, name: name, size: 44)
-            Text(DisplayNameFormat.firstLast(from: name))
-                .font(.headline)
-                .foregroundStyle(.primary)
-            Spacer(minLength: 0)
-        }
-        .padding(.vertical, 4)
-    }
-
     private func friendlyError(_ message: String) -> String {
         if message.localizedCaseInsensitiveContains("permission") {
             return "Nema dozvole za čitanje liste. Objavi najnovija Firestore pravila u Firebase konzoli (sekcija followers)."
@@ -112,6 +104,11 @@ struct ProfileConnectionsListView: View {
                 followers = []
                 isLoading = false
                 loadError = nil
+                Task {
+                    for entry in list {
+                        await authorCache.refresh(authorId: entry.targetUserId)
+                    }
+                }
             } onError: { error in
                 isLoading = false
                 loadError = error.localizedDescription
@@ -123,6 +120,11 @@ struct ProfileConnectionsListView: View {
                 following = []
                 isLoading = false
                 loadError = nil
+                Task {
+                    for entry in list {
+                        await authorCache.refresh(authorId: entry.followerUserId)
+                    }
+                }
             } onError: { error in
                 isLoading = false
                 loadError = error.localizedDescription
@@ -140,9 +142,17 @@ struct ProfileConnectionsListView: View {
         do {
             switch kind {
             case .following:
-                following = try await FirestoreService.shared.fetchFollowing(userId: userId)
+                let list = try await FirestoreService.shared.fetchFollowing(userId: userId)
+                following = list
+                for entry in list {
+                    await authorCache.refresh(authorId: entry.targetUserId)
+                }
             case .followers:
-                followers = try await FirestoreService.shared.fetchFollowers(userId: userId)
+                let list = try await FirestoreService.shared.fetchFollowers(userId: userId)
+                followers = list
+                for entry in list {
+                    await authorCache.refresh(authorId: entry.followerUserId)
+                }
             }
             loadError = nil
         } catch {

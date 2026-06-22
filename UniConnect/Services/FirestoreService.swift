@@ -580,6 +580,73 @@ final class FirestoreService {
         return created
     }
 
+    /// Ažurira keširano ime i sliku u svim `following` / `followers` zapisima gde se korisnik pojavljuje.
+    /// Dokument je uvek `…/following/{userId}` ili `…/followers/{userId}`.
+    @discardableResult
+    func syncFollowProfileMirrors(
+        userId: String,
+        displayName: String,
+        profileImageURL: String?,
+        previousDisplayName: String?,
+        previousProfileImageURL: String?
+    ) async throws -> Int {
+        let trimmedName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let newPhoto = profileImageURL?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let oldPhoto = previousProfileImageURL?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let nameChanged = trimmedName != (previousDisplayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "")
+        let photoChanged = newPhoto != oldPhoto
+        guard nameChanged || photoChanged else { return 0 }
+
+        var patch: [String: Any] = [:]
+        if nameChanged {
+            patch["displayName"] = trimmedName
+        }
+        if photoChanged {
+            if let newPhoto, !newPhoto.isEmpty {
+                patch["profileImageURL"] = newPhoto
+            } else {
+                patch["profileImageURL"] = FieldValue.delete()
+            }
+        }
+
+        async let followingSnap = db.collectionGroup(Constants.Firestore.following)
+            .whereField("targetUserId", isEqualTo: userId)
+            .getDocuments(source: .server)
+        async let followersSnap = db.collectionGroup(Constants.Firestore.followers)
+            .whereField("followerUserId", isEqualTo: userId)
+            .getDocuments(source: .server)
+
+        let documents = try await (followingSnap, followersSnap)
+        var seen = Set<String>()
+        let refs = (documents.0.documents + documents.1.documents).compactMap { doc -> DocumentReference? in
+            let path = doc.reference.path
+            guard seen.insert(path).inserted else { return nil }
+            return doc.reference
+        }
+        guard !refs.isEmpty else { return 0 }
+
+        let batchLimit = 500
+        var batch = db.batch()
+        var opCount = 0
+        var updated = 0
+
+        for ref in refs {
+            batch.updateData(patch, forDocument: ref)
+            opCount += 1
+            updated += 1
+            if opCount >= batchLimit {
+                try await batch.commit()
+                batch = db.batch()
+                opCount = 0
+            }
+        }
+        if opCount > 0 {
+            try await batch.commit()
+        }
+        return updated
+    }
+
     func listenFollowers(
         userId: String,
         onChange: @escaping ([UserFollower]) -> Void,

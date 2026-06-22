@@ -169,7 +169,8 @@ struct UserSearchView: View {
         let needle = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !needle.isEmpty else { return followVM.followingUsers }
         return followVM.followingUsers.filter {
-            $0.displayName.localizedCaseInsensitiveContains(needle)
+            let name = authorCache.resolvedName(for: $0.targetUserId, fallback: $0.displayName)
+            return name.localizedCaseInsensitiveContains(needle)
         }
     }
 
@@ -241,15 +242,25 @@ private struct UserSearchRow: View {
 private struct UserFollowRow: View {
     let follow: UserFollow
 
+    @EnvironmentObject private var authorCache: AuthorProfileCache
+
+    private var name: String {
+        authorCache.resolvedName(for: follow.targetUserId, fallback: follow.displayName)
+    }
+
+    private var photoURL: String? {
+        authorCache.photoURL(for: follow.targetUserId) ?? follow.profileImageURL
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             ProfileAvatarImage(
-                imageURL: follow.profileImageURL,
-                name: follow.displayName,
+                imageURL: photoURL,
+                name: name,
                 size: 44
             )
             VStack(alignment: .leading, spacing: 4) {
-                Text(DisplayNameFormat.firstLast(from: follow.displayName))
+                Text(DisplayNameFormat.firstLast(from: name))
                     .font(.headline)
                     .foregroundStyle(.primary)
                 Text("Dodirni za ćaskanje")
@@ -261,5 +272,8 @@ private struct UserFollowRow: View {
                 .foregroundStyle(Constants.Colors.primary)
         }
         .padding(.vertical, 4)
+        .task(id: follow.targetUserId) {
+            await authorCache.refresh(authorId: follow.targetUserId)
+        }
     }
 }
