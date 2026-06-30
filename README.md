@@ -1,6 +1,8 @@
 # UniConnect
 
-iOS aplikacija za **studentski kampus** — događaji, oglasi, feed objave, poruke, praćenje korisnika i profil. Projekat je pisan u **SwiftUI** uz arhitekturu **MVVM** i backend **Firebase** (Auth, Cloud Firestore, Storage).
+iOS aplikacija za **studentski kampus** — događaji, oglasi, feed objave, poruke, praćenje korisnika, profil i admin moderacija. Projekat je pisan u **SwiftUI** uz arhitekturu **MVVM** i backend **Firebase** (Auth, Cloud Firestore, Storage).
+
+Diplomski rad — finalna verzija aplikacije.
 
 ## Tehnologije
 
@@ -15,50 +17,152 @@ iOS aplikacija za **studentski kampus** — događaji, oglasi, feed objave, poru
 
 Minimalna verzija iOS-a: **iOS 17+**.
 
+## Tabovi aplikacije
+
+| Tab | Sadržaj |
+|-----|---------|
+| **Događaji** | Lista, mapa, filter, RSVP, kreiranje i izmena |
+| **Oglasi** | Lista, pretraga, filter, slike, kontakt prodavca |
+| **Objave** | Feed sa threadovima, lajkovi, pretraga korisnika |
+| **Poruke** | Real-time chat, slike, badge nepročitanih |
+| **Profil** | Pregled, izmena, pratioci, tuđi profili |
+| **Admin** | Samo za `role: admin` — moderacija i statistika |
+
 ## Funkcionalnosti
 
-### Gotovo
+### Autentifikacija i nalog
 
-- **Autentifikacija** — prijava, registracija, odjava; **zaboravljena lozinka** (Firebase reset email); dokument korisnika u `users/{uid}`; verifikacioni email pri registraciji.
-- **Događaji** — lista i mapa, filter po kategoriji, kreiranje (adresa → koordinate), detalj, RSVP, izmena/brisanje za organizatora; navigacija na profil organizatora.
-- **Oglasi** — lista, pretraga, filter kategorije, kreiranje sa slikama, detalj, izmena slika, brisanje; autor vidljiv u detalju oglasa; kontakt prodavca preko poruka.
-- **Feed** — korenske objave, threadovi (odgovori), lajkovi, slike, brisanje thread-a; filter **Praćeni** / **Svi**; pretraga korisnika (lupa); navigacija na profil (avatar + ime).
-- **Praćenje** — zaprati / otprati, liste **Pratioci** i **Pratiš** na profilu (sveže ime/slika iz `users/{uid}`), pretraga svih korisnika, novo ćaskanje samo sa praćenima; sync mirror zapisa pri izmeni profila.
-- **Profil** — pregled i izmena (ime, godina, smer, bio, profilna slika); tuđi profil; sekcije oglasa i feed objava autora.
-- **Poruke** — tab sa badge-om nepročitanih; sekcije **Razgovori** i **Oglasi**; real-time chat (Firestore); tekst i **slike**; brisanje razgovora; DM sa profila; chat sa oglasa; uvek svež avatar/ime sagovornika.
-- **Performanse** — paralelno učitavanje tabova, Firestore disk keš, `URLCache`, `AuthorProfileCache` za autore i učesnike chata.
+- Prijava, registracija, odjava
+- Zaboravljena lozinka (Firebase reset email)
+- Verifikacija emaila — aplikacija je nedostupna dok korisnik ne potvrdi email
+- Dokument korisnika u `users/{uid}` (ime, godina, smer, bio, profilna slika)
+- Ban sistem — trajni ili vremenski ban; ekran `BannedView` blokira pristup
 
-### U planu
+### Događaji
 
-- Read receipts (označavanje pojedinačnih poruka kao pročitanih)
-- Push notifikacije za nove poruke
-- Paginacija feeda / oglasa
-- Globalna pretraga (oglasi + događaji + korisnici)
+- Lista i mapa, filter po kategoriji, pretraga
+- Kreiranje sa adresom → automatsko geokodiranje koordinata
+- Detalj, RSVP, izmena i brisanje za organizatora
+- Navigacija na profil organizatora
+- Arhiviranje isteklih događaja (admin)
+
+### Oglasi (Board)
+
+- Lista, pretraga, filter po kategoriji
+- Kreiranje sa više slika, detalj, izmena slika, brisanje
+- Autor vidljiv u detalju; kontakt prodavca preko poruka (chat vezan za oglas)
+- **Pošalji u chat** — deljenje oglasa drugom korisniku
+
+### Feed (Objave)
+
+- Korenske objave i threadovi (odgovori)
+- Lajkovi, slike, brisanje sopstvenih objava i threadova
+- Filter **Praćeni** / **Svi**
+- Pretraga korisnika (lupa u toolbar-u)
+- Navigacija na profil (avatar + ime)
+- **Pošalji u chat** — deljenje objave preko context menija
+
+### Praćenje i pretraga
+
+- Zaprati / otprati korisnika
+- Liste **Pratioci** i **Pratiš** na profilu
+- Pretraga svih korisnika po imenu
+- Novo ćaskanje samo sa korisnicima koje pratiš
+- Sync mirror zapisa (`following` / `followers`) pri izmeni profila
+
+### Profil
+
+- Pregled i izmena (ime, godina, smer, bio, profilna slika)
+- Tuđi profil sa sekcijama oglasa i feed objava autora
+- Statistike (pratioci, pratiš, objave)
+
+### Poruke
+
+- Tab sa badge-om nepročitanih poruka
+- Sekcije **Razgovori** i **Oglasi** (chat vezan za oglas)
+- Real-time chat (Firestore listeneri)
+- Tekst i slike u porukama
+- Brisanje razgovora (pojedinačno ili višestruki izbor)
+- DM sa profila; chat sa oglasa
+- Svež avatar i ime sagovornika (`AuthorProfileCache`)
+- **Deljeni sadržaj** — kartica u chatu (oglas / događaj / objava) sa navigacijom na original
+
+### Prijave sadržaja
+
+Korisnici mogu prijaviti:
+
+- Oglas, događaj, feed objavu
+- Korisnički profil
+- Poruku u chatu (dugi pritisak)
+
+Prijave se čuvaju u `reports` sa statusom `pending` / `resolved`.
+
+### Admin panel
+
+Dostupan samo korisnicima sa `role: admin` u Firestore-u.
+
+- **Dashboard** — broj korisnika, oglasa, događaja, feed objava, prijava na čekanju (Firestore count agregacija)
+- **Prijave** — folderi *Pending* i *Rešene*; pregled prijavljenog sadržaja
+- **Moderacija** — ban / unban, brisanje sadržaja, brisanje profilne slike, arhiviranje događaja
+- **Upravljanje korisnicima** — pretraga, pregled profila i statistika
+- **Admin log** — zapis akcija u `admin_logs`
+
+Kreiranje admin naloga: vidi [scripts/README.md](scripts/README.md).
+
+### Performanse
+
+- Paralelno učitavanje tabova pri startu
+- Firestore disk keš, `URLCache`
+- `AuthorProfileCache` za autore i učesnike chata
+- Optimistički lajkovi na feedu
+
+## Arhitektura
+
+```
+UniConnectApp
+  └── ContentView (auth / verifikacija / ban gate)
+        └── MainTabView
+              ├── ViewModels (Events, Board, Feed, Chat, Follow, Admin)
+              ├── Services (Auth, Firestore, Storage, Admin)
+              └── Views po modulima
+```
+
+| Sloj | Sadržaj |
+|------|---------|
+| **Models** | `AppUser`, `Event`, `Post`, `FeedPost`, `Chat`, `Message`, `UserFollow`, `UserFollower`, `Report`, `AdminLog`, `SharedContent` |
+| **Services** | `AuthService`, `FirestoreService`, `StorageService`, `AdminService` |
+| **ViewModels** | `AuthViewModel`, `EventsViewModel`, `BoardViewModel`, `FeedViewModel`, `ChatViewModel`, `FollowViewModel`, `AdminViewModel` |
+| **Utilities** | keš, geokodiranje, kompresija slika, validacija, follow mirror migracija |
 
 ## Struktura repozitorijuma
 
 ```
 UniConnect/
 ├── firebase.json
+├── .firebaserc
 ├── firestore.rules
-├── firestore.indexes.json   # Collection group indeksi (follow sync)
+├── firestore.indexes.json
 ├── storage.rules
-├── scripts/                 # Admin skripte (opciono)
-│   └── migrate-followers-mirror.mjs
+├── scripts/                    # Admin i migracije (Node.js)
+│   ├── create-admin.mjs
+│   ├── migrate-followers-mirror.mjs
+│   └── README.md
 ├── UniConnect/
+│   ├── Assets.xcassets/        # App ikona + AccentColor
 │   ├── UniConnect.xcodeproj/
 │   └── UniConnect/
-│       ├── Models/          # AppUser, Event, Post, FeedPost, Chat, Message, UserFollow…
-│       ├── Services/        # AuthService, FirestoreService, StorageService
+│       ├── Models/
+│       ├── Services/
 │       ├── ViewModels/
 │       ├── Views/
-│       │   ├── Auth/        # Login, Register, ForgotPassword
+│       │   ├── Admin/
+│       │   ├── Auth/
 │       │   ├── Board/
 │       │   ├── Chat/
+│       │   ├── Components/
 │       │   ├── Events/
 │       │   ├── Feed/
-│       │   ├── Profile/
-│       │   └── Components/
+│       │   └── Profile/
 │       └── Utilities/
 └── README.md
 ```
@@ -66,28 +170,31 @@ UniConnect/
 ## Pokretanje u Xcode-u
 
 1. Kloniraj repozitorijum i otvori **`UniConnect/UniConnect.xcodeproj`**.
-2. U [Firebase konzoli](https://console.firebase.google.com) kreiraj iOS aplikaciju sa istim **Bundle ID** kao u Xcode-u.
-3. Preuzmi **`GoogleService-Info.plist`** i dodaj ga u target **UniConnect** (*Copy items if needed*).
+2. U [Firebase konzoli](https://console.firebase.google.com) kreiraj iOS aplikaciju sa istim **Bundle ID** kao u Xcode-u (`com.lukatasic.UniConnect`).
+3. Preuzmi **`GoogleService-Info.plist`** i dodaj ga u target **UniConnect** (*Copy items if needed*), ili koristi postojeći iz repoa.
 4. U Firebase uključi:
    - **Authentication → Email/Password**
    - **Cloud Firestore** (produkcijski režim + pravila)
    - **Storage** (bucket + pravila)
 5. Objavi security rules i indekse (vidi ispod).
-6. Pokreni na simulatoru ili uređaju (**⌘R**).
+6. (Opciono) Kreiraj admin nalog — [scripts/README.md](scripts/README.md).
+7. Pokreni na simulatoru ili uređaju (**⌘R**).
 
-> **Napomena:** `GoogleService-Info.plist` sadrži konfiguraciju Firebase projekta. Za javni repozitorijum razmotri `.gitignore` za taj fajl.
+> **Napomena:** `GoogleService-Info.plist` sadrži konfiguraciju Firebase projekta. Za javni repozitorijum razmotri rotaciju ključeva i dodavanje fajla u `.gitignore`.
 
 ## Firebase — kolekcije i Storage
 
 | Resurs | Put / kolekcija |
 |--------|------------------|
 | Korisnici | `users/{uid}` |
-| Praćenje | `users/{uid}/following/{targetId}` (keš: ime, slika) |
-| Pratioci | `users/{uid}/followers/{followerId}` (keš: ime, slika) |
+| Praćenje | `users/{uid}/following/{targetId}` |
+| Pratioci | `users/{uid}/followers/{followerId}` |
 | Događaji | `events/{eventId}` |
 | Oglasi | `posts/{postId}` |
-| Feed | `feed_posts/{postId}` (koren + odgovori u istoj kolekciji) |
-| Poruke | `chats/{chatId}` + podkolekcija `messages/{messageId}` |
+| Feed | `feed_posts/{postId}` |
+| Poruke | `chats/{chatId}` + `messages/{messageId}` |
+| Prijave | `reports/{reportId}` |
+| Admin log | `admin_logs/{logId}` |
 | Profilne slike | `profile_images/{uid}.jpg` |
 | Slike oglasa | `posts/{postId}/…` |
 | Slike feeda | `feed_posts/{postId}/…` |
@@ -96,9 +203,10 @@ UniConnect/
 Aplikacija koristi **Cloud Firestore**, ne Firebase Realtime Database.
 
 Pri izmeni profila (ime/slika) aplikacija:
+
 1. Ažurira `users/{uid}`
 2. Sync-uje mirror u svim `following` / `followers` zapisima (collection group upit)
-3. Liste i poruke prikazuju sveže podatke iz `users/{uid}` preko `AuthorProfileCache`
+3. Liste i poruke prikazuju sveže podatke preko `AuthorProfileCache`
 
 ### Security rules
 
@@ -107,13 +215,15 @@ U korenu repoa su `firestore.rules` i `storage.rules`. U konzoli:
 1. **Firestore Database → Rules** — kopiraj sadržaj `firestore.rules` → **Publish**
 2. **Storage → Rules** — kopiraj sadržaj `storage.rules` → **Publish**
 
-Opciono iz terminala (Firebase CLI):
+Iz terminala (Firebase CLI):
 
 ```bash
 firebase login
-firebase use --add
+firebase use --add    # ili koristi postojeći .firebaserc
 firebase deploy --only firestore:rules,firestore:indexes,storage
 ```
+
+Pravila pokrivaju: verifikovan email, ban, admin ulogu, vlasništvo nad sadržajem, prijave i chat učesnike.
 
 ### Indeksi
 
@@ -127,6 +237,19 @@ Za **sync profila u follow listama** potrebni su **single-field** exemption-i (C
 U konzoli: **Firestore → Indexes → Single field → Add exemption**, ili deploy `firestore.indexes.json` preko Firebase CLI.
 
 Za pretragu korisnika po `displayName` konzola može zatražiti dodatni indeks — link iz greške u Xcode konzoli vodi na automatsku kreaciju.
+
+## Admin nalog (razvoj / demo)
+
+```bash
+cd scripts
+npm install
+export GOOGLE_APPLICATION_CREDENTIALS="./service-account.json"
+npm run create:admin
+```
+
+Podrazumevano: `admin@gmail.com` / `admin123` — samo za razvoj i demonstraciju na odbrani.
+
+Detalji: [scripts/README.md](scripts/README.md).
 
 ## Licenca
 

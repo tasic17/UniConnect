@@ -6,7 +6,13 @@ struct ContentView: View {
     var body: some View {
         Group {
             if authViewModel.isLoggedIn {
-                MainTabView()
+                if !authViewModel.isEmailVerified {
+                    EmailVerificationView()
+                } else if authViewModel.isBanned {
+                    BannedView()
+                } else {
+                    MainTabView()
+                }
             } else {
                 LoginView()
             }

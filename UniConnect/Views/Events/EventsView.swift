@@ -17,6 +17,11 @@ struct EventsView: View {
                 .pickerStyle(.segmented)
                 .padding()
 
+                TextField("Pretraga…", text: $viewModel.searchText)
+                    .textFieldStyle(.roundedBorder)
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
                         FilterChip(title: "Sve", isSelected: viewModel.selectedCategory == nil) {
@@ -48,7 +53,10 @@ struct EventsView: View {
                         .padding(.top, 12)
                         .padding(.bottom, 12)
                 } else {
-                    EventsListView(events: viewModel.filteredEvents)
+                    EventsListView(
+                        events: viewModel.filteredEvents,
+                        allEventsEmpty: viewModel.events.isEmpty
+                    )
                         .padding(.horizontal, 8)
                         .padding(.top, 4)
                         .padding(.bottom, 8)

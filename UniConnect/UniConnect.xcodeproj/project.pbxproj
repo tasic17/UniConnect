@@ -16,6 +16,7 @@
 		56CEDB5D2F9186C600B0E0AF /* FeedPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB402F9186C600B0E0AF /* FeedPost.swift */; };
 		56CEDB5E2F9186C600B0E0AF /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB4E2F9186C600B0E0AF /* RegisterView.swift */; };
 		56CEDBF12FA0F00000B0E0AF /* ForgotPasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBF02FA0F00000B0E0AF /* ForgotPasswordView.swift */; };
+		56CEDBF32FA0F10000B0E0AF /* EmailVerificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBF22FA0F10000B0E0AF /* EmailVerificationView.swift */; };
 		56CEDB5F2F9186C600B0E0AF /* Post.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB422F9186C600B0E0AF /* Post.swift */; };
 		56CEDB602F9186C600B0E0AF /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB3F2F9186C600B0E0AF /* Event.swift */; };
 		56CEDB612F9186C600B0E0AF /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDB3E2F9186C600B0E0AF /* Chat.swift */; };
@@ -70,6 +71,17 @@
 		56CEDBE92FA0E20000B0E0AF /* ProfileConnectionsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBE82FA0E20000B0E0AF /* ProfileConnectionsListView.swift */; };
 		56CEDBEB2FA0E20000B0E0AF /* ProfileStatsRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBEA2FA0E20000B0E0AF /* ProfileStatsRow.swift */; };
 		56CEDBED2FA0E30000B0E0AF /* FollowMirrorMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDBEC2FA0E30000B0E0AF /* FollowMirrorMigration.swift */; };
+		56CEDC022FA0F20000B0E0AF /* Report.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDC012FA0F20000B0E0AF /* Report.swift */; };
+		56CEDC042FA0F20000B0E0AF /* AdminLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDC032FA0F20000B0E0AF /* AdminLog.swift */; };
+		56CEDC062FA0F20000B0E0AF /* AdminService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDC052FA0F20000B0E0AF /* AdminService.swift */; };
+		56CEDC082FA0F20000B0E0AF /* AdminViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDC072FA0F20000B0E0AF /* AdminViewModel.swift */; };
+		56CEDC0A2FA0F20000B0E0AF /* AdminView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDC092FA0F20000B0E0AF /* AdminView.swift */; };
+		56CEDC0C2FA0F20000B0E0AF /* ReportContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDC0B2FA0F20000B0E0AF /* ReportContentView.swift */; };
+		56CEDC0E2FA0F20000B0E0AF /* BannedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDC0D2FA0F20000B0E0AF /* BannedView.swift */; };
+		56CEDC102FA0F30000B0E0AF /* SharedContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDC0F2FA0F30000B0E0AF /* SharedContent.swift */; };
+		56CEDC122FA0F30000B0E0AF /* SendContentToChatSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDC112FA0F30000B0E0AF /* SendContentToChatSheet.swift */; };
+		56CEDC142FA0F30000B0E0AF /* FeedPostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CEDC132FA0F30000B0E0AF /* FeedPostDetailView.swift */; };
+		56CEDC202FA0F40000B0E0AF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 56CEDC1F2FA0F40000B0E0AF /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -102,6 +114,7 @@
 		56CEDB4D2F9186C600B0E0AF /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		56CEDB4E2F9186C600B0E0AF /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		56CEDBF02FA0F00000B0E0AF /* ForgotPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgotPasswordView.swift; sourceTree = "<group>"; };
+		56CEDBF22FA0F10000B0E0AF /* EmailVerificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailVerificationView.swift; sourceTree = "<group>"; };
 		56CEDB562F9186C600B0E0AF /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		56CEDB752F91925000B0E0AF /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		56CEDB7B2F91950000B0E0AF /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
@@ -133,6 +146,17 @@
 		56CEDBE82FA0E20000B0E0AF /* ProfileConnectionsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileConnectionsListView.swift; sourceTree = "<group>"; };
 		56CEDBEA2FA0E20000B0E0AF /* ProfileStatsRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStatsRow.swift; sourceTree = "<group>"; };
 		56CEDBEC2FA0E30000B0E0AF /* FollowMirrorMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowMirrorMigration.swift; sourceTree = "<group>"; };
+		56CEDC012FA0F20000B0E0AF /* Report.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Report.swift; sourceTree = "<group>"; };
+		56CEDC032FA0F20000B0E0AF /* AdminLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminLog.swift; sourceTree = "<group>"; };
+		56CEDC052FA0F20000B0E0AF /* AdminService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminService.swift; sourceTree = "<group>"; };
+		56CEDC072FA0F20000B0E0AF /* AdminViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminViewModel.swift; sourceTree = "<group>"; };
+		56CEDC092FA0F20000B0E0AF /* AdminView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminView.swift; sourceTree = "<group>"; };
+		56CEDC0B2FA0F20000B0E0AF /* ReportContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportContentView.swift; sourceTree = "<group>"; };
+		56CEDC0D2FA0F20000B0E0AF /* BannedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BannedView.swift; sourceTree = "<group>"; };
+		56CEDC0F2FA0F30000B0E0AF /* SharedContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedContent.swift; sourceTree = "<group>"; };
+		56CEDC112FA0F30000B0E0AF /* SendContentToChatSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendContentToChatSheet.swift; sourceTree = "<group>"; };
+		56CEDC132FA0F30000B0E0AF /* FeedPostDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedPostDetailView.swift; sourceTree = "<group>"; };
+		56CEDC1F2FA0F40000B0E0AF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -160,6 +184,7 @@
 				56CEDB4A2F9186C600B0E0AF /* Utilities */,
 				56CEDB4C2F9186C600B0E0AF /* ViewModels */,
 				56CEDB572F9186C600B0E0AF /* Views */,
+				56CEDC1F2FA0F40000B0E0AF /* Assets.xcassets */,
 				56CEDB2F2F9185C400B0E0AF /* Products */,
 				56CEDB792F91937800B0E0AF /* GoogleService-Info.plist */,
 			);
@@ -184,6 +209,9 @@
 				56CEDB422F9186C600B0E0AF /* Post.swift */,
 				56CEDBE02FA0E10000B0E0AF /* UserFollow.swift */,
 				56CEDBE62FA0E20000B0E0AF /* UserFollower.swift */,
+				56CEDC012FA0F20000B0E0AF /* Report.swift */,
+				56CEDC032FA0F20000B0E0AF /* AdminLog.swift */,
+				56CEDC0F2FA0F30000B0E0AF /* SharedContent.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -194,6 +222,7 @@
 				56CEDB442F9186C600B0E0AF /* AuthService.swift */,
 				56CEDB7F2F91970000B0E0AF /* FirestoreService.swift */,
 				56CEDBA62FA0B24000B0E0AF /* StorageService.swift */,
+				56CEDC052FA0F20000B0E0AF /* AdminService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -223,6 +252,7 @@
 				56CEDBB02FA0C31000B0E0AF /* FeedViewModel.swift */,
 				56CEDBD02FA0D50000B0E0AF /* ChatViewModel.swift */,
 				56CEDBE22FA0E10000B0E0AF /* FollowViewModel.swift */,
+				56CEDC072FA0F20000B0E0AF /* AdminViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -233,6 +263,8 @@
 				56CEDB4D2F9186C600B0E0AF /* LoginView.swift */,
 				56CEDB4E2F9186C600B0E0AF /* RegisterView.swift */,
 				56CEDBF02FA0F00000B0E0AF /* ForgotPasswordView.swift */,
+				56CEDBF22FA0F10000B0E0AF /* EmailVerificationView.swift */,
+				56CEDC0D2FA0F20000B0E0AF /* BannedView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -253,6 +285,7 @@
 			children = (
 				56CEDBD22FA0D50000B0E0AF /* MessagesView.swift */,
 				56CEDBD42FA0D50000B0E0AF /* ChatDetailView.swift */,
+				56CEDC112FA0F30000B0E0AF /* SendContentToChatSheet.swift */,
 			);
 			path = Chat;
 			sourceTree = "<group>";
@@ -262,6 +295,7 @@
 			children = (
 				56CEDB822F91980000B0E0AF /* FilterChip.swift */,
 				56CEDBD92FA0D60000B0E0AF /* AuthorProfileTapRow.swift */,
+				56CEDC0B2FA0F20000B0E0AF /* ReportContentView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -286,6 +320,7 @@
 				56CEDBB22FA0C31000B0E0AF /* CreateFeedPostView.swift */,
 				56CEDBB62FA0C31000B0E0AF /* CreateReplyView.swift */,
 				56CEDBC52FA0C42000B0E0AF /* EditFeedPostView.swift */,
+				56CEDC132FA0F30000B0E0AF /* FeedPostDetailView.swift */,
 			);
 			path = Feed;
 			sourceTree = "<group>";
@@ -305,9 +340,18 @@
 			path = Profile;
 			sourceTree = "<group>";
 		};
+		56CEDC0F2FA0F20000B0E0AF /* Admin */ = {
+			isa = PBXGroup;
+			children = (
+				56CEDC092FA0F20000B0E0AF /* AdminView.swift */,
+			);
+			path = Admin;
+			sourceTree = "<group>";
+		};
 		56CEDB572F9186C600B0E0AF /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				56CEDC0F2FA0F20000B0E0AF /* Admin */,
 				56CEDB4F2F9186C600B0E0AF /* Auth */,
 				56CEDB502F9186C600B0E0AF /* Board */,
 				56CEDB512F9186C600B0E0AF /* Chat */,
@@ -388,6 +432,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				56CEDC202FA0F40000B0E0AF /* Assets.xcassets in Resources */,
 				56CEDB7A2F91937800B0E0AF /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -408,6 +453,7 @@
 				56CEDB5D2F9186C600B0E0AF /* FeedPost.swift in Sources */,
 				56CEDB5E2F9186C600B0E0AF /* RegisterView.swift in Sources */,
 				56CEDBF12FA0F00000B0E0AF /* ForgotPasswordView.swift in Sources */,
+				56CEDBF32FA0F10000B0E0AF /* EmailVerificationView.swift in Sources */,
 				56CEDB5F2F9186C600B0E0AF /* Post.swift in Sources */,
 				56CEDB602F9186C600B0E0AF /* Event.swift in Sources */,
 				56CEDB762F91925000B0E0AF /* ProfileView.swift in Sources */,
@@ -457,6 +503,16 @@
 				56CEDBE92FA0E20000B0E0AF /* ProfileConnectionsListView.swift in Sources */,
 				56CEDBEB2FA0E20000B0E0AF /* ProfileStatsRow.swift in Sources */,
 				56CEDBED2FA0E30000B0E0AF /* FollowMirrorMigration.swift in Sources */,
+				56CEDC022FA0F20000B0E0AF /* Report.swift in Sources */,
+				56CEDC042FA0F20000B0E0AF /* AdminLog.swift in Sources */,
+				56CEDC062FA0F20000B0E0AF /* AdminService.swift in Sources */,
+				56CEDC082FA0F20000B0E0AF /* AdminViewModel.swift in Sources */,
+				56CEDC0A2FA0F20000B0E0AF /* AdminView.swift in Sources */,
+				56CEDC0C2FA0F20000B0E0AF /* ReportContentView.swift in Sources */,
+				56CEDC0E2FA0F20000B0E0AF /* BannedView.swift in Sources */,
+				56CEDC102FA0F30000B0E0AF /* SharedContent.swift in Sources */,
+				56CEDC122FA0F30000B0E0AF /* SendContentToChatSheet.swift in Sources */,
+				56CEDC142FA0F30000B0E0AF /* FeedPostDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -516,7 +572,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -574,7 +630,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;

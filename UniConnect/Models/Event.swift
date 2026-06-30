@@ -15,12 +15,15 @@ struct Event: Codable, Identifiable {
     var attendeesCount: Int
     var attendees: [String]
     var createdAt: Date
+    var isArchived: Bool?
 
     /// Nije u Firestore dokumentu — računa se u ViewModel-u.
     var isAttending: Bool = false
 
+    var isArchivedEvent: Bool { isArchived ?? false }
+
     enum CodingKeys: String, CodingKey {
-        case id, title, description, category, authorId, authorName, date, location, latitude, longitude, attendeesCount, attendees, createdAt
+        case id, title, description, category, authorId, authorName, date, location, latitude, longitude, attendeesCount, attendees, createdAt, isArchived
     }
 
     enum EventCategory: String, Codable, CaseIterable {

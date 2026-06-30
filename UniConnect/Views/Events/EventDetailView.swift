@@ -6,8 +6,13 @@ struct EventDetailView: View {
     var navigationPath: Binding<NavigationPath>?
     @EnvironmentObject var eventsVM: EventsViewModel
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var chatVM: ChatViewModel
+    @EnvironmentObject var followVM: FollowViewModel
+    @EnvironmentObject var authorCache: AuthorProfileCache
     @Environment(\.dismiss) private var dismiss
     @State private var showEditEvent = false
+    @State private var showReport = false
+    @State private var sharePayload: SharedContentPayload?
 
     private var event: Event? {
         eventsVM.events.first { $0.id == eventId }
@@ -112,6 +117,47 @@ struct EventDetailView: View {
         }
         .navigationTitle(event?.title ?? "Događaj")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let event, authViewModel.currentUser != nil {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        if let id = event.id {
+                            Button {
+                                sharePayload = .event(id: id, title: event.title)
+                            } label: {
+                                Label("Pošalji u chat", systemImage: "paperplane")
+                            }
+                        }
+                        if !isOrganizer {
+                            Button(role: .destructive) {
+                                showReport = true
+                            } label: {
+                                Label("Prijavi", systemImage: "flag")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                }
+            }
+        }
+        .sheet(item: $sharePayload) { payload in
+            SendContentToChatSheet(payload: payload)
+                .environmentObject(authViewModel)
+                .environmentObject(chatVM)
+                .environmentObject(followVM)
+                .environmentObject(authorCache)
+        }
+        .sheet(isPresented: $showReport) {
+            if let event, let id = event.id {
+                ReportContentView(
+                    targetType: .event,
+                    targetId: id,
+                    targetTitle: event.title
+                )
+                .environmentObject(authViewModel)
+            }
+        }
         .sheet(isPresented: $showEditEvent) {
             if let ev = eventsVM.events.first(where: { $0.id == eventId }) {
                 EditEventView(event: ev)

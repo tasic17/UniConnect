@@ -7,10 +7,23 @@ final class EventsViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var selectedCategory: Event.EventCategory?
+    @Published var searchText = ""
 
     var filteredEvents: [Event] {
-        guard let category = selectedCategory else { return events }
-        return events.filter { $0.category == category }
+        var result = events.filter { !$0.isArchivedEvent }
+        if let category = selectedCategory {
+            result = result.filter { $0.category == category }
+        }
+        if !searchText.isEmpty {
+            let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            result = result.filter {
+                $0.title.localizedCaseInsensitiveContains(q)
+                    || $0.description.localizedCaseInsensitiveContains(q)
+                    || $0.location.localizedCaseInsensitiveContains(q)
+                    || $0.authorName.localizedCaseInsensitiveContains(q)
+            }
+        }
+        return result
     }
 
     /// Izbegava dupli fetch kad su događaji već učitani u pozadini (`MainTabView`).
@@ -67,7 +80,8 @@ final class EventsViewModel: ObservableObject {
             longitude: longitude,
             attendeesCount: 0,
             attendees: [],
-            createdAt: Date()
+            createdAt: Date(),
+            isArchived: false
         )
         do {
             try await FirestoreService.shared.createEvent(event)

@@ -5,10 +5,13 @@ enum UserSearchMode {
     case discoverAll
     /// Samo praćeni korisnici → pokreni / otvori chat.
     case pickFollowedForChat
+    /// Praćeni + pretraga → pošalji sadržaj u chat.
+    case pickUserForShare
 }
 
 struct UserSearchView: View {
     let mode: UserSearchMode
+    var embeddedInSheet: Bool = false
     var onPickUserForChat: ((String) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
@@ -28,19 +31,21 @@ struct UserSearchView: View {
                 .padding()
 
             Group {
-                if mode == .pickFollowedForChat {
-                    followedPickerContent
+                if mode == .pickFollowedForChat || mode == .pickUserForShare {
+                    sharePickerContent
                 } else {
                     discoverContent
                 }
             }
         }
         .background(Constants.Colors.background)
-        .navigationTitle(navigationTitle)
+        .navigationTitle(embeddedInSheet ? "" : navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Zatvori") { dismiss() }
+            if !embeddedInSheet {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Zatvori") { dismiss() }
+                }
             }
         }
         .navigationDestination(for: AuthorProfileNavigationID.self) { target in
@@ -56,6 +61,7 @@ struct UserSearchView: View {
         switch mode {
         case .discoverAll: return "Pretraga korisnika"
         case .pickFollowedForChat: return "Novo ćaskanje"
+        case .pickUserForShare: return "Izaberi primaoca"
         }
     }
 
@@ -89,6 +95,7 @@ struct UserSearchView: View {
         switch mode {
         case .discoverAll: return "Ime, prezime ili smer…"
         case .pickFollowedForChat: return "Filtriraj praćene…"
+        case .pickUserForShare: return "Ime ili filtriraj praćene…"
         }
     }
 
@@ -128,7 +135,45 @@ struct UserSearchView: View {
     }
 
     @ViewBuilder
-    private var followedPickerContent: some View {
+    private var sharePickerContent: some View {
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if mode == .pickUserForShare, trimmedQuery.count >= 2 {
+            shareSearchResults
+        } else {
+            followedPickerList
+        }
+    }
+
+    @ViewBuilder
+    private var shareSearchResults: some View {
+        if isSearching {
+            ProgressView("Pretraga…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if let searchError {
+            Text(searchError)
+                .font(.footnote)
+                .foregroundStyle(.red)
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if results.isEmpty {
+            Text("Nema rezultata.")
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            List(results) { user in
+                Button {
+                    onPickUserForChat?(user.uid)
+                } label: {
+                    UserSearchRow(user: user)
+                }
+                .buttonStyle(.plain)
+            }
+            .listStyle(.plain)
+        }
+    }
+
+    @ViewBuilder
+    private var followedPickerList: some View {
         let filtered = filteredFollowingUsers()
         if followVM.isLoading && followVM.followingUsers.isEmpty {
             ProgressView("Učitavanje…")
@@ -155,9 +200,14 @@ struct UserSearchView: View {
             List(filtered, id: \.targetUserId) { follow in
                 Button {
                     onPickUserForChat?(follow.targetUserId)
-                    dismiss()
+                    if mode == .pickFollowedForChat {
+                        dismiss()
+                    }
                 } label: {
-                    UserFollowRow(follow: follow)
+                    UserFollowRow(
+                        follow: follow,
+                        actionHint: mode == .pickUserForShare ? "Pošalji" : "Dodirni za ćaskanje"
+                    )
                 }
                 .buttonStyle(.plain)
             }
@@ -176,7 +226,7 @@ struct UserSearchView: View {
 
     private func scheduleSearch(text: String) {
         searchTask?.cancel()
-        guard mode == .discoverAll else { return }
+        guard mode == .discoverAll || mode == .pickUserForShare else { return }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count >= 2 else {
             results = []
@@ -241,6 +291,7 @@ private struct UserSearchRow: View {
 
 private struct UserFollowRow: View {
     let follow: UserFollow
+    var actionHint: String = "Dodirni za ćaskanje"
 
     @EnvironmentObject private var authorCache: AuthorProfileCache
 
@@ -263,7 +314,7 @@ private struct UserFollowRow: View {
                 Text(DisplayNameFormat.firstLast(from: name))
                     .font(.headline)
                     .foregroundStyle(.primary)
-                Text("Dodirni za ćaskanje")
+                Text(actionHint)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -20,6 +20,8 @@ struct FeedView: View {
     @State private var feedScope: FeedScope = .everyone
     @State private var expandedThreads: Set<String> = []
     @State private var replyTarget: ReplyTarget?
+    @State private var reportItem: FeedReportItem?
+    @State private var sharePayload: SharedContentPayload?
 
     private var displayedPosts: [FeedPost] {
         var list = viewModel.posts
@@ -139,6 +141,21 @@ struct FeedView: View {
                 .environmentObject(viewModel)
                 .environmentObject(authViewModel)
             }
+            .sheet(item: $reportItem) { item in
+                ReportContentView(
+                    targetType: .feedPost,
+                    targetId: item.targetId,
+                    targetTitle: item.targetTitle
+                )
+                .environmentObject(authViewModel)
+            }
+            .sheet(item: $sharePayload) { payload in
+                SendContentToChatSheet(payload: payload)
+                    .environmentObject(authViewModel)
+                    .environmentObject(chatVM)
+                    .environmentObject(followVM)
+                    .environmentObject(authorCache)
+            }
             .task {
                 await viewModel.ensureFeedLoadedIfEmpty()
                 if let uid = authViewModel.currentUser?.uid {
@@ -183,7 +200,13 @@ struct FeedView: View {
                         threadRootId: rootId
                     )
                 },
-                onDelete: { Task { await viewModel.deletePost(rootPost) } }
+                onDelete: { Task { await viewModel.deletePost(rootPost) } },
+                onReport: {
+                    reportItem = FeedReportItem(postId: rootId, title: feedReportTitle(for: rootPost))
+                },
+                onShare: authViewModel.currentUser != nil ? {
+                    sharePayload = .feedPost(id: rootId, title: feedReportTitle(for: rootPost))
+                } : nil
             )
 
             if expanded {
@@ -216,7 +239,13 @@ struct FeedView: View {
                                     threadRootId: rootId
                                 )
                             },
-                            onDelete: { Task { await viewModel.deletePost(pair.1) } }
+                            onDelete: { Task { await viewModel.deletePost(pair.1) } },
+                            onReport: {
+                                reportItem = FeedReportItem(postId: pair.0, title: feedReportTitle(for: pair.1))
+                            },
+                            onShare: authViewModel.currentUser != nil ? {
+                                sharePayload = .feedPost(id: pair.0, title: feedReportTitle(for: pair.1))
+                            } : nil
                         )
                     }
                 } else {
@@ -264,6 +293,12 @@ struct FeedView: View {
         return level
     }
 
+    private func feedReportTitle(for post: FeedPost) -> String {
+        let text = post.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        if text.isEmpty { return "Feed objava" }
+        return String(text.prefix(80))
+    }
+
     private var errorBinding: Binding<Bool> {
         Binding(
             get: { viewModel.errorMessage != nil },
@@ -273,6 +308,18 @@ struct FeedView: View {
 
     private var emptyFilterMessage: String {
         feedScope == .following ? "Nema objava od praćenih" : "Ništa za prikaz"
+    }
+}
+
+private struct FeedReportItem: Identifiable {
+    let targetId: String
+    let targetTitle: String
+
+    var id: String { targetId }
+
+    init(postId: String, title: String) {
+        self.targetId = postId
+        self.targetTitle = title
     }
 }
 
@@ -391,6 +438,8 @@ private struct FeedPostRow: View {
     var onToggleThread: (() -> Void)?
     let onReply: () -> Void
     let onDelete: () -> Void
+    var onReport: (() -> Void)?
+    var onShare: (() -> Void)?
 
     @EnvironmentObject private var viewModel: FeedViewModel
     @EnvironmentObject private var authViewModel: AuthViewModel
@@ -539,6 +588,16 @@ private struct FeedPostRow: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .shadow(color: Color.black.opacity(0.06), radius: 6, y: 2)
         .contextMenu {
+            if let onShare {
+                Button(action: onShare) {
+                    Label("Pošalji u chat", systemImage: "paperplane")
+                }
+            }
+            if !isAuthor, let onReport {
+                Button(action: onReport) {
+                    Label("Prijavi", systemImage: "flag")
+                }
+            }
             if isAuthor {
                 Button(role: .destructive, action: onDelete) {
                     Label("Obriši", systemImage: "trash")

@@ -6,8 +6,12 @@ struct PostDetailView: View {
     @EnvironmentObject var boardVM: BoardViewModel
     @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var chatVM: ChatViewModel
+    @EnvironmentObject var followVM: FollowViewModel
+    @EnvironmentObject var authorCache: AuthorProfileCache
     @Environment(\.dismiss) private var dismiss
     @State private var showEditPost = false
+    @State private var showReport = false
+    @State private var sharePayload: SharedContentPayload?
     @State private var isOpeningChat = false
     /// Učitavanje direktno iz Firestore kada oglas nije u kešu table (npr. neaktivan ili otvoren sa profila).
     @State private var loadedPost: Post?
@@ -143,13 +147,49 @@ struct PostDetailView: View {
         .navigationTitle(post?.title ?? "Oglas")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if isAuthor, post != nil {
+            if post != nil, authViewModel.currentUser != nil {
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Uredi") {
-                        boardVM.errorMessage = nil
-                        showEditPost = true
+                    Menu {
+                        Button {
+                            if let p = post, let id = p.id {
+                                sharePayload = .post(id: id, title: p.title)
+                            }
+                        } label: {
+                            Label("Pošalji u chat", systemImage: "paperplane")
+                        }
+                        if isAuthor {
+                            Button("Uredi") {
+                                boardVM.errorMessage = nil
+                                showEditPost = true
+                            }
+                        } else {
+                            Button(role: .destructive) {
+                                showReport = true
+                            } label: {
+                                Label("Prijavi", systemImage: "flag")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
                 }
+            }
+        }
+        .sheet(item: $sharePayload) { payload in
+            SendContentToChatSheet(payload: payload)
+                .environmentObject(authViewModel)
+                .environmentObject(chatVM)
+                .environmentObject(followVM)
+                .environmentObject(authorCache)
+        }
+        .sheet(isPresented: $showReport) {
+            if let p = post, let id = p.id {
+                ReportContentView(
+                    targetType: .post,
+                    targetId: id,
+                    targetTitle: p.title
+                )
+                .environmentObject(authViewModel)
             }
         }
         .sheet(isPresented: $showEditPost) {

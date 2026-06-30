@@ -17,6 +17,7 @@ struct UserProfileView: View {
     @State private var followersCount = 0
     @State private var followingCount = 0
     @State private var countListeners: [ListenerRegistration] = []
+    @State private var showReport = false
 
     private var isMe: Bool {
         authViewModel.currentUser?.uid == userId
@@ -46,6 +47,23 @@ struct UserProfileView: View {
         .background(Constants.Colors.background)
         .navigationTitle(user?.displayName ?? "Profil")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !isMe, user != nil {
+                ToolbarItem(placement: .primaryAction) {
+                    ReportToolbarButton { showReport = true }
+                }
+            }
+        }
+        .sheet(isPresented: $showReport) {
+            if let user {
+                ReportContentView(
+                    targetType: .user,
+                    targetId: user.uid,
+                    targetTitle: user.displayName
+                )
+                .environmentObject(authViewModel)
+            }
+        }
         .navigationDestination(for: ProfileConnectionsNavigationID.self) { nav in
             ProfileConnectionsListView(userId: nav.userId, kind: nav.kind)
         }

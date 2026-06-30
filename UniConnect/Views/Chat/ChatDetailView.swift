@@ -7,9 +7,12 @@ struct ChatDetailView: View {
 
     @EnvironmentObject private var chatVM: ChatViewModel
     @EnvironmentObject private var authViewModel: AuthViewModel
+    @EnvironmentObject private var boardVM: BoardViewModel
+    @EnvironmentObject private var eventsVM: EventsViewModel
 
     @State private var draft = ""
     @State private var selectedPhoto: PhotosPickerItem?
+    @State private var reportingMessage: Message?
     @FocusState private var inputFocused: Bool
 
     private var currentUserId: String? { authViewModel.currentUser?.uid }
@@ -36,10 +39,20 @@ struct ChatDetailView: View {
                                 MessageBubble(
                                     text: message.text,
                                     imageURL: message.imageURL,
+                                    sharedContent: message.sharedContent,
                                     isMine: message.senderId == currentUserId,
                                     time: message.createdAt
                                 )
                                 .id(id)
+                                .contextMenu {
+                                    if message.senderId != currentUserId {
+                                        Button {
+                                            reportingMessage = message
+                                        } label: {
+                                            Label("Prijavi poruku", systemImage: "flag")
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -88,6 +101,9 @@ struct ChatDetailView: View {
         .background(Constants.Colors.background)
         .navigationTitle(chatTitle)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: SharedContentNavigation.self) { nav in
+            sharedContentDestination(nav)
+        }
         .onAppear {
             chatVM.startListeningMessages(chatId: chatId)
             if let uid = currentUserId {
@@ -103,6 +119,50 @@ struct ChatDetailView: View {
                 await sendPhoto(item)
                 selectedPhoto = nil
             }
+        }
+        .sheet(item: $reportingMessage) { message in
+            if let messageId = message.id {
+                ReportContentView(
+                    targetType: .message,
+                    targetId: messageId,
+                    targetTitle: messagePreview(message),
+                    chatId: chatId,
+                    messageId: messageId,
+                    messageText: message.text,
+                    messageImageURL: message.imageURL,
+                    messageSenderId: message.senderId
+                )
+                .environmentObject(authViewModel)
+            }
+        }
+    }
+
+    private func messagePreview(_ message: Message) -> String {
+        if let shared = message.sharedContent {
+            return "\(shared.type.label): \(shared.title)"
+        }
+        let text = message.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !text.isEmpty { return String(text.prefix(80)) }
+        if let url = message.imageURL, !url.isEmpty { return "Slika u poruci" }
+        return "Poruka"
+    }
+
+    @ViewBuilder
+    private func sharedContentDestination(_ nav: SharedContentNavigation) -> some View {
+        switch nav.type {
+        case .post:
+            PostDetailView(postId: nav.contentId)
+                .environmentObject(boardVM)
+                .environmentObject(authViewModel)
+                .environmentObject(chatVM)
+        case .event:
+            EventDetailView(eventId: nav.contentId)
+                .environmentObject(eventsVM)
+                .environmentObject(authViewModel)
+                .environmentObject(chatVM)
+        case .feedPost:
+            FeedPostDetailView(postId: nav.contentId)
+                .environmentObject(authViewModel)
         }
     }
 
@@ -152,6 +212,7 @@ struct ChatDetailView: View {
 private struct MessageBubble: View {
     let text: String
     let imageURL: String?
+    let sharedContent: SharedContentPayload?
     let isMine: Bool
     let time: Date
 
@@ -169,6 +230,13 @@ private struct MessageBubble: View {
             if isMine { Spacer(minLength: 48) }
             VStack(alignment: isMine ? .trailing : .leading, spacing: 4) {
                 VStack(alignment: isMine ? .trailing : .leading, spacing: 6) {
+                    if let sharedContent {
+                        NavigationLink(value: SharedContentNavigation(type: sharedContent.type, contentId: sharedContent.contentId)) {
+                            SharedContentCardView(payload: sharedContent, compact: true)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
                     if hasImage, let url = URL(string: imageURL ?? "") {
                         AsyncImage(url: url) { phase in
                             switch phase {

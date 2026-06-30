@@ -34,16 +34,15 @@ fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
 
-# Lokalni Cursor / spec prompt (ne na remote)
-SingiCampus_CursorPrompt.docx
-SingiCampus_CursorPrompt.txt
+# Lokalni prompt / radni fajlovi
+SingiCampus_*
+*.docx
+
+# Firebase Admin — nikad na remote
+scripts/service-account.json
+scripts/node_modules/
 
 # Firebase — za JAVNI repo često se ignoriše i doda README sa uputstvom.
 # Za privatni timski repo mnogi ga commituju da clone radi odmah.
 # Odkomentuj sledeću liniju ako NE želiš plist na GitHubu:
 # **/GoogleService-Info.plist
-
-# Firebase Admin (migracije)
-scripts/service-account.json
-scripts/node_modules/
-scripts/package-lock.json

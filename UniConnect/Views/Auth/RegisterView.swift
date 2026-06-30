@@ -57,7 +57,7 @@ struct RegisterView: View {
                             year: year,
                             department: department.rawValue
                         )
-                        if authViewModel.errorMessage == nil {
+                        if authViewModel.errorMessage == nil, authViewModel.isLoggedIn {
                             dismiss()
                         }
                     }

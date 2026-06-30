@@ -141,6 +141,47 @@ final class ChatViewModel: ObservableObject {
     }
 
     @MainActor
+    func sendSharedContent(
+        currentUserId: String,
+        recipientId: String,
+        type: SharedContentType,
+        contentId: String,
+        title: String,
+        comment: String? = nil
+    ) async -> String? {
+        guard currentUserId != recipientId else {
+            errorMessage = "Ne možeš poslati poruku samom sebi."
+            return nil
+        }
+        isSending = true
+        errorMessage = nil
+        defer { isSending = false }
+        do {
+            let chatId = try await FirestoreService.shared.findOrCreateChat(
+                currentUserId: currentUserId,
+                otherUserId: recipientId,
+                postId: nil,
+                postTitle: nil
+            )
+            try await FirestoreService.shared.sendMessage(
+                chatId: chatId,
+                senderId: currentUserId,
+                recipientId: recipientId,
+                text: comment,
+                imageURL: nil,
+                sharedType: type,
+                sharedId: contentId,
+                sharedTitle: title
+            )
+            ensureChatsListening(userId: currentUserId)
+            return chatId
+        } catch {
+            errorMessage = error.localizedDescription
+            return nil
+        }
+    }
+
+    @MainActor
     func sendImageMessage(chatId: String, senderId: String, imageData: Data, caption: String? = nil) async -> Bool {
         guard let chat = chats.first(where: { $0.id == chatId }),
               let recipientId = chat.otherParticipantId(than: senderId) else {

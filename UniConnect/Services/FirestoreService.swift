@@ -15,6 +15,16 @@ final class FirestoreService {
         return try snapshot.documents.compactMap { try $0.data(as: Event.self) }
     }
 
+    func fetchEvent(id: String) async throws -> Event? {
+        let doc = try await db.collection(Constants.Firestore.events).document(id).getDocument()
+        guard doc.exists else { return nil }
+        return try doc.data(as: Event.self)
+    }
+
+    func fetchAllEventsIncludingArchived() async throws -> [Event] {
+        try await fetchEvents()
+    }
+
     func createEvent(_ event: Event) async throws {
         try db.collection(Constants.Firestore.events).addDocument(from: event)
     }
@@ -303,14 +313,20 @@ final class FirestoreService {
         senderId: String,
         recipientId: String,
         text: String?,
-        imageURL: String? = nil
+        imageURL: String? = nil,
+        sharedType: SharedContentType? = nil,
+        sharedId: String? = nil,
+        sharedTitle: String? = nil
     ) async throws {
         let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let image = imageURL?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !trimmed.isEmpty || !image.isEmpty else { return }
+        let hasShared = sharedType != nil && sharedId != nil && !(sharedTitle?.isEmpty ?? true)
+        guard !trimmed.isEmpty || !image.isEmpty || hasShared else { return }
 
         let preview: String
-        if !trimmed.isEmpty {
+        if hasShared, let sharedType, let sharedTitle {
+            preview = "\(sharedType.label): \(sharedTitle)"
+        } else if !trimmed.isEmpty {
             preview = trimmed
         } else {
             preview = "Slika"
@@ -323,7 +339,10 @@ final class FirestoreService {
             text: trimmed,
             imageURL: image.isEmpty ? nil : image,
             createdAt: Date(),
-            isRead: false
+            isRead: false,
+            sharedType: sharedType?.rawValue,
+            sharedId: sharedId,
+            sharedTitle: sharedTitle
         )
         let batch = db.batch()
         try batch.setData(from: message, forDocument: messageRef)

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct EventsListView: View {
     let events: [Event]
+    var allEventsEmpty: Bool = true
 
     var body: some View {
         Group {
@@ -10,11 +11,13 @@ struct EventsListView: View {
                     Image(systemName: "calendar.badge.exclamationmark")
                         .font(.largeTitle)
                         .foregroundStyle(.secondary)
-                    Text("Nema događaja")
+                    Text(allEventsEmpty ? "Nema događaja" : "Ništa za ovaj filter")
                         .font(.headline)
-                    Text("Dodaj novi događaj sa +.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    if allEventsEmpty {
+                        Text("Dodaj novi događaj sa +.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()

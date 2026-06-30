@@ -16,6 +16,8 @@ struct Constants {
         static let messages = "messages"
         static let following = "following"
         static let followers = "followers"
+        static let reports = "reports"
+        static let adminLogs = "admin_logs"
     }
 }
 

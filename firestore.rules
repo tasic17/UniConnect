@@ -6,6 +6,29 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function emailVerified() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    function notBanned() {
+      let u = userDoc(request.auth.uid);
+      return !(u.get('banned', false) == true && (
+        !u.keys().hasAny(['bannedUntil']) || u.bannedUntil > request.time
+      ));
+    }
+
+    function isActiveUser() {
+      return emailVerified() && notBanned();
+    }
+
+    function isAdmin() {
+      return isActiveUser() && userDoc(request.auth.uid).get('role', 'user') == 'admin';
+    }
+
     function isOwner(uid) {
       return signedIn() && request.auth.uid == uid;
     }
@@ -19,18 +42,19 @@ service cloud.firestore {
 
     // ——— Korisnici ———
     match /users/{userId} {
-      allow read: if signedIn();
+      allow read: if isActiveUser() || isAdmin();
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      allow update: if isAdmin() || (isOwner(userId) && isActiveUser());
       allow delete: if false;
 
       match /following/{targetId} {
-        allow get, list: if signedIn();
-        allow create: if isOwner(userId)
+        allow get, list: if isActiveUser();
+        allow create: if isActiveUser()
+          && isOwner(userId)
           && request.resource.data.targetUserId == targetId
           && targetId != userId;
-        allow delete: if isOwner(userId);
-        allow update: if signedIn()
+        allow delete: if isActiveUser() && isOwner(userId);
+        allow update: if isActiveUser()
           && request.auth.uid == targetId
           && resource.data.get('targetUserId', targetId) == targetId
           && request.resource.data.get('targetUserId', targetId) == targetId
@@ -38,14 +62,14 @@ service cloud.firestore {
       }
 
       match /followers/{followerId} {
-        allow get, list: if signedIn();
-        allow create: if signedIn()
+        allow get, list: if isActiveUser();
+        allow create: if isActiveUser()
           && request.resource.data.followerUserId == followerId
           && followerId == request.auth.uid
           && followerId != userId;
-        allow delete: if signedIn()
+        allow delete: if isActiveUser()
           && (followerId == request.auth.uid || isOwner(userId));
-        allow update: if signedIn()
+        allow update: if isActiveUser()
           && request.auth.uid == followerId
           && resource.data.get('followerUserId', followerId) == followerId
           && request.resource.data.get('followerUserId', followerId) == followerId
@@ -53,42 +77,59 @@ service cloud.firestore {
       }
     }
 
+    // ——— Prijave ———
+    match /reports/{reportId} {
+      allow create: if isActiveUser()
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow read, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ——— Admin log ———
+    match /admin_logs/{logId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
     // ——— Događaji ———
     match /events/{eventId} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if isActiveUser();
+      allow create: if isActiveUser()
         && request.resource.data.authorId == request.auth.uid;
-      allow update: if signedIn() && (
+      allow update: if isActiveUser() && (
         resource.data.authorId == request.auth.uid
         || request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['attendees', 'attendeesCount'])
+      ) || isAdmin();
+      allow delete: if isActiveUser() && (
+        resource.data.authorId == request.auth.uid || isAdmin()
       );
-      allow delete: if signedIn()
-        && resource.data.authorId == request.auth.uid;
     }
 
     // ——— Oglasi ———
     match /posts/{postId} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if isActiveUser();
+      allow create: if isActiveUser()
         && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if signedIn()
-        && resource.data.authorId == request.auth.uid;
+      allow update, delete: if isActiveUser() && (
+        resource.data.authorId == request.auth.uid || isAdmin()
+      );
     }
 
     // ——— Feed objave ———
     match /feed_posts/{postId} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if isActiveUser();
+      allow create: if isActiveUser()
         && request.resource.data.authorId == request.auth.uid;
-      allow update: if signedIn() && (
+      allow update: if isActiveUser() && (
         resource.data.authorId == request.auth.uid
         || request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['likes', 'likesCount', 'replyCount', 'imageURLs'])
-      );
-      // Autor dokumenta ili autor korena thread-a (brisanje celog thread-a).
-      allow delete: if signedIn() && (
+      ) || isAdmin();
+      allow delete: if isActiveUser() && (
         resource.data.authorId == request.auth.uid
+        || isAdmin()
         || (
           resource.data.threadRootId != null
           && get(/databases/$(database)/documents/feed_posts/$(resource.data.threadRootId)).data.authorId == request.auth.uid
@@ -98,25 +139,28 @@ service cloud.firestore {
 
     // ——— Poruke ———
     match /chats/{chatId} {
-      allow read: if signedIn()
+      allow read: if isActiveUser()
         && request.auth.uid in resource.data.participants;
-      allow create: if signedIn()
+      allow create: if isActiveUser()
         && request.auth.uid in request.resource.data.participants
         && request.resource.data.participants.size() == 2
         && request.resource.data.participantKey is string;
-      allow update: if signedIn()
+      allow update: if isActiveUser()
         && request.auth.uid in resource.data.participants;
-      allow delete: if signedIn()
-        && request.auth.uid in resource.data.participants;
+      allow delete: if isActiveUser() && (
+        request.auth.uid in resource.data.participants || isAdmin()
+      );
 
       match /messages/{messageId} {
-        allow read: if signedIn()
+        allow read: if isActiveUser()
           && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
-        allow create: if signedIn()
+        allow create: if isActiveUser()
           && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
           && request.resource.data.senderId == request.auth.uid;
-        allow delete: if signedIn()
-          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        allow delete: if isActiveUser() && (
+          request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+          || isAdmin()
+        );
         allow update: if false;
       }
     }

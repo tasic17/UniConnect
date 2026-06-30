@@ -6,6 +6,7 @@ enum MainTab: Int, Hashable {
     case feed = 2
     case messages = 3
     case profile = 4
+    case admin = 5
 }
 
 struct MainTabView: View {
@@ -58,9 +59,16 @@ struct MainTabView: View {
             ProfileView()
                 .tabItem { Label("Profil", systemImage: "person.circle") }
                 .tag(MainTab.profile)
+
+            if authViewModel.isAdmin {
+                AdminView()
+                    .tabItem { Label("Admin", systemImage: "shield.fill") }
+                    .tag(MainTab.admin)
+            }
         }
         .tint(Constants.Colors.primary)
         .environmentObject(boardVM)
+        .environmentObject(eventsVM)
         .environmentObject(feedVM)
         .environmentObject(chatVM)
         .environmentObject(followVM)

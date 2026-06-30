@@ -6,6 +6,10 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    function emailVerified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
     function isImage() {
       return request.resource == null
         || request.resource.contentType.matches('image/.*');
@@ -14,32 +18,32 @@ service firebase.storage {
     // Profilna: samo svoj fajl (profile_images/{uid}.jpg)
     match /profile_images/{fileName} {
       allow read: if signedIn();
-      allow write: if signedIn()
+      allow write: if emailVerified()
         && fileName == request.auth.uid + '.jpg'
         && isImage();
-      allow delete: if signedIn()
+      allow delete: if emailVerified()
         && fileName == request.auth.uid + '.jpg';
     }
 
     // Slike oglasa: posts/{postId}/{file}.jpg
     match /posts/{postId}/{fileName} {
       allow read: if signedIn();
-      allow write: if signedIn() && isImage();
-      allow delete: if signedIn();
+      allow write: if emailVerified() && isImage();
+      allow delete: if emailVerified();
     }
 
     // Slike feed objava: feed_posts/{postId}/{file}.jpg
     match /feed_posts/{postId}/{fileName} {
       allow read: if signedIn();
-      allow write: if signedIn() && isImage();
-      allow delete: if signedIn();
+      allow write: if emailVerified() && isImage();
+      allow delete: if emailVerified();
     }
 
     // Slike u ćaskanjima: chats/{chatId}/{file}.jpg
     match /chats/{chatId}/{fileName} {
       allow read: if signedIn();
-      allow write: if signedIn() && isImage();
-      allow delete: if signedIn();
+      allow write: if emailVerified() && isImage();
+      allow delete: if emailVerified();
     }
   }
 }
