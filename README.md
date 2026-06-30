@@ -107,7 +107,6 @@ Dostupan samo korisnicima sa `role: admin` u Firestore-u.
 - **Upravljanje korisnicima** — pretraga, pregled profila i statistika
 - **Admin log** — zapis akcija u `admin_logs`
 
-Kreiranje admin naloga: vidi [scripts/README.md](scripts/README.md).
 
 ### Performanse
 
@@ -167,20 +166,6 @@ UniConnect/
 └── README.md
 ```
 
-## Pokretanje u Xcode-u
-
-1. Kloniraj repozitorijum i otvori **`UniConnect/UniConnect.xcodeproj`**.
-2. U [Firebase konzoli](https://console.firebase.google.com) kreiraj iOS aplikaciju sa istim **Bundle ID** kao u Xcode-u (`com.lukatasic.UniConnect`).
-3. Preuzmi **`GoogleService-Info.plist`** i dodaj ga u target **UniConnect** (*Copy items if needed*), ili koristi postojeći iz repoa.
-4. U Firebase uključi:
-   - **Authentication → Email/Password**
-   - **Cloud Firestore** (produkcijski režim + pravila)
-   - **Storage** (bucket + pravila)
-5. Objavi security rules i indekse (vidi ispod).
-6. (Opciono) Kreiraj admin nalog — [scripts/README.md](scripts/README.md).
-7. Pokreni na simulatoru ili uređaju (**⌘R**).
-
-> **Napomena:** `GoogleService-Info.plist` sadrži konfiguraciju Firebase projekta. Za javni repozitorijum razmotri rotaciju ključeva i dodavanje fajla u `.gitignore`.
 
 ## Firebase — kolekcije i Storage
 
@@ -249,7 +234,6 @@ npm run create:admin
 
 Podrazumevano: `admin@gmail.com` / `admin123` — samo za razvoj i demonstraciju na odbrani.
 
-Detalji: [scripts/README.md](scripts/README.md).
 
 ## Licenca
 
