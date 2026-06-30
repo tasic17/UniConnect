@@ -223,14 +223,8 @@ U konzoli: **Firestore → Indexes → Single field → Add exemption**, ili dep
 
 Za pretragu korisnika po `displayName` konzola može zatražiti dodatni indeks — link iz greške u Xcode konzoli vodi na automatsku kreaciju.
 
-## Admin nalog (razvoj / demo)
+## Admin nalog 
 
-```bash
-cd scripts
-npm install
-export GOOGLE_APPLICATION_CREDENTIALS="./service-account.json"
-npm run create:admin
-```
 
 Podrazumevano: `admin@gmail.com` / `admin123` — samo za razvoj i demonstraciju na odbrani.
 
