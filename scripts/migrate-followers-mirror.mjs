@@ -1,10 +1,10 @@
 /**
- * Jednokratna migracija cele baze: za svaki users/{uid}/following/{targetId}
- * kreira users/{targetId}/followers/{uid} ako ne postoji.
+ * One-off backfill: for every users/{uid}/following/{targetId} document,
+ * create the mirrored users/{targetId}/followers/{uid} document if missing.
  *
- * Zahteva Firebase service account JSON (Admin SDK).
+ * Requires a Firebase service account JSON (Admin SDK).
  *
- * Korišćenje:
+ * Usage:
  *   cd scripts
  *   npm install
  *   export GOOGLE_APPLICATION_CREDENTIALS="../path/to/service-account.json"
@@ -34,7 +34,7 @@ async function migrate() {
   const db = initFirebase();
   const followingSnap = await db.collectionGroup("following").get();
 
-  console.log(`Pronađeno ${followingSnap.size} following zapisa.`);
+  console.log(`Found  following documents.`);
 
   let created = 0;
   let skipped = 0;
@@ -47,7 +47,7 @@ async function migrate() {
     const snap = await db.collection("users").doc(uid).get();
     const data = snap.exists ? snap.data() : {};
     const profile = {
-      displayName: data.displayName || "Korisnik",
+      displayName: data.displayName || "User",
       profileImageURL: data.profileImageURL ?? null,
     };
     userCache.set(uid, profile);
@@ -108,17 +108,17 @@ async function migrate() {
 
     if (batchOps >= batchLimit) {
       await commitBatch();
-      console.log(`… commit (${created} kreirano do sada)`);
+      console.log(`… commit ( created so far)`);
     }
   }
 
   await commitBatch();
 
   console.log("");
-  console.log("Migracija završena.");
-  console.log(`  Kreirano: ${created}`);
-  console.log(`  Preskočeno (već postoji): ${skipped}`);
-  console.log(`  Greške: ${errors}`);
+  console.log("Backfill complete.");
+  console.log(`  Created: `);
+  console.log(`  Skipped (already present): `);
+  console.log(`  Errors: `);
 }
 
 migrate().catch((err) => {

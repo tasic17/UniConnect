@@ -1,17 +1,22 @@
 /**
- * Kreira admin nalog: admin@gmail.com / admin123
- * + Firestore users/{uid} sa role: "admin" i emailVerified u Auth.
+ * Creates an administrator account: a Firebase Auth user with a verified email
+ * plus a Firestore users/{uid} document with role: "admin".
  *
- * Korišćenje (produkcija / service account):
+ * Credentials are read from the environment — never hardcode them.
+ *
+ * Usage (service account):
  *   cd scripts
  *   npm install
  *   export GOOGLE_APPLICATION_CREDENTIALS="../path/to/service-account.json"
+ *   export ADMIN_EMAIL="you@example.com"
+ *   export ADMIN_PASSWORD="<a strong password>"
  *   npm run create:admin
  *
- * Emulator:
+ * Usage (local emulator):
  *   export FIRESTORE_EMULATOR_HOST="127.0.0.1:8080"
  *   export FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:9099"
  *   export GCLOUD_PROJECT="your-project-id"
+ *   export ADMIN_EMAIL="..." ADMIN_PASSWORD="..."
  *   npm run create:admin
  */
 
@@ -22,9 +27,23 @@ import admin from "firebase-admin";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const ADMIN_EMAIL = "admin@gmail.com";
-const ADMIN_PASSWORD = "admin123";
-const ADMIN_NAME = "Admin";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_NAME = process.env.ADMIN_NAME || "Admin";
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error(
+    "Set ADMIN_EMAIL and ADMIN_PASSWORD before running this script, e.g.\n" +
+      '  export ADMIN_EMAIL="you@example.com"\n' +
+      '  export ADMIN_PASSWORD="<a strong password>"'
+  );
+  process.exit(1);
+}
+
+if (ADMIN_PASSWORD.length < 8) {
+  console.error("ADMIN_PASSWORD must be at least 8 characters long.");
+  process.exit(1);
+}
 
 function initFirebase() {
   const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
@@ -37,14 +56,14 @@ function initFirebase() {
       process.env.GOOGLE_CLOUD_PROJECT ||
       "demo-uniconnect";
     admin.initializeApp({ projectId });
-    console.log(`Emulator mod (project: ${projectId})`);
+    console.log(`Emulator mode (project: ${projectId})`);
     return admin.firestore();
   }
 
   if (!credPath || !existsSync(credPath)) {
     console.error(
-      "Postavi GOOGLE_APPLICATION_CREDENTIALS na service-account.json\n" +
-        "ili pokreni sa FIRESTORE_EMULATOR_HOST / FIREBASE_AUTH_EMULATOR_HOST."
+      "Set GOOGLE_APPLICATION_CREDENTIALS to your service-account.json,\n" +
+        "or run against the emulators via FIRESTORE_EMULATOR_HOST / FIREBASE_AUTH_EMULATOR_HOST."
     );
     process.exit(1);
   }
@@ -67,7 +86,7 @@ async function ensureAdminUser() {
       displayName: ADMIN_NAME,
       emailVerified: true,
     });
-    console.log(`Kreiran Auth korisnik: ${user.uid}`);
+    console.log(`Created Auth user: ${user.uid}`);
   } catch (err) {
     if (err.code !== "auth/email-already-exists") throw err;
     user = await auth.getUserByEmail(ADMIN_EMAIL);
@@ -76,7 +95,7 @@ async function ensureAdminUser() {
       displayName: ADMIN_NAME,
       emailVerified: true,
     });
-    console.log(`Ažuriran postojeći Auth korisnik: ${user.uid}`);
+    console.log(`Updated existing Auth user: ${user.uid}`);
   }
 
   return user;
@@ -106,12 +125,11 @@ async function main() {
       { merge: true }
     );
 
-  console.log("\nAdmin nalog spreman:");
-  console.log(`  Email:    ${ADMIN_EMAIL}`);
-  console.log(`  Lozinka:  ${ADMIN_PASSWORD}`);
-  console.log(`  UID:      ${user.uid}`);
+  console.log("\nAdmin account ready:");
+  console.log(`  Email:     ${ADMIN_EMAIL}`);
+  console.log(`  UID:       ${user.uid}`);
   console.log(`  Firestore: users/${user.uid} (role: admin)`);
-  console.log("\nUloguj se u aplikaciju — tab Admin će se pojaviti nakon verifikacije emaila (već verified u Auth).");
+  console.log("\nSign in with these credentials — the Admin tab appears once the email is verified (already verified in Auth).");
 }
 
 main().catch((err) => {

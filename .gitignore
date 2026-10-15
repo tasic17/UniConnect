@@ -22,27 +22,17 @@ xcuserdata/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
 
-# CocoaPods (ako ikad dodaš)
+# Dependency managers (not used, kept for safety)
 Pods/
-
-# Carthage
 Carthage/Build/
 
-# fastlane
-fastlane/report.xml
-fastlane/Preview.html
-fastlane/screenshots/**/*.png
-fastlane/test_output
+# Node (Firebase Admin scripts)
+node_modules/
 
-# Lokalni prompt / radni fajlovi
-SingiCampus_*
-*.docx
-
-# Firebase Admin — nikad na remote
+# Secrets — never commit these.
+# Both files are specific to one Firebase project; see README for setup.
+**/GoogleService-Info.plist
+!**/GoogleService-Info.plist.example
 scripts/service-account.json
-scripts/node_modules/
-
-# Firebase — za JAVNI repo često se ignoriše i doda README sa uputstvom.
-# Za privatni timski repo mnogi ga commituju da clone radi odmah.
-# Odkomentuj sledeću liniju ako NE želiš plist na GitHubu:
-# **/GoogleService-Info.plist
+.env
+.env.local
