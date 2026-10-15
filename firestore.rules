@@ -42,7 +42,10 @@ service cloud.firestore {
 
     // ——— Korisnici ———
     match /users/{userId} {
-      allow read: if isActiveUser() || isAdmin();
+      // Vlasnik uvek sme da procita SVOJ dokument (i kad je banovan) da bi
+      // aplikacija mogla da detektuje ban i prikaze BannedView.
+      allow get: if isOwner(userId) || isActiveUser() || isAdmin();
+      allow list: if isActiveUser() || isAdmin();
       allow create: if isOwner(userId);
       allow update: if isAdmin() || (isOwner(userId) && isActiveUser());
       allow delete: if false;

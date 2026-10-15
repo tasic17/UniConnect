@@ -12,7 +12,7 @@ enum GeocodingHelper {
         let search = MKLocalSearch(request: request)
         do {
             let response = try await search.start()
-            return response.mapItems.first?.location.coordinate
+            return response.mapItems.first?.placemark.coordinate
         } catch {
             return nil
         }
